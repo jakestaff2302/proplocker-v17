@@ -48,6 +48,20 @@ exports.handler = async (event) => {
       user: userToClient(user)
     });
   } catch (error) {
+    const message = String(error?.message || "");
+    const isBlobsConfigError =
+      message.includes("Netlify Blobs is not configured") ||
+      message.includes("NETLIFY_SITE_ID") ||
+      message.includes("NETLIFY_AUTH_TOKEN");
+
+    if (isBlobsConfigError) {
+      return json(200, {
+        mode: "local",
+        user: null,
+        entitlement: "FREE"
+      });
+    }
+
     return json(500, { error: error.message || "Server error" });
   }
 };

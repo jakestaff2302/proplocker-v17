@@ -849,6 +849,10 @@
             setLoading(false);
             return;
           }
+
+          if (result?.mode === "local") {
+            console.info("Login backend in local mode, using local credential fallback.");
+          }
         } catch (err) {
           console.warn("Backend login failed, falling back to localStorage:", err?.message);
         }
@@ -1632,7 +1636,7 @@
           console.debug("[checkout] authorization header set", willSetAuthHeader);
 
           if (!token || tokenPartsCount !== 3) {
-            onSessionExpired();
+            alert("Cloud checkout is unavailable in local mode. Sign in with cloud auth to upgrade.");
             return;
           }
 
