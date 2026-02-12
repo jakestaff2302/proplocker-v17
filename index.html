@@ -342,6 +342,25 @@
   return data;
 }
 
+    async function requestAuthToken(identity) {
+      if (!identity) return null;
+      try {
+        const tokenResult = await postJSON("/auth-token", {
+          loginId: identity.loginId || identity.login_id || "",
+          email: identity.email || ""
+        });
+        const token = typeof tokenResult?.token === "string" ? tokenResult.token : "";
+        if (!token) return null;
+
+        localStorage.setItem("prop_locker_token", token);
+        console.debug("[auth-token] tokenParts", token.split(".").length);
+        return token;
+      } catch (err) {
+        console.warn("Cloud token issuance failed:", err?.message);
+        return null;
+      }
+    }
+
 
     // ---------- Backend Email Logic ----------
     const sendLoginEmail = async (details) => {
@@ -688,6 +707,8 @@
             name: created.name
           });
 
+          await requestAuthToken(created);
+
           setLoading(false);
           onSignupSuccess(created);
 
@@ -716,6 +737,8 @@
               loginId: newUser.loginId,
               name: newUser.name
             });
+
+            await requestAuthToken(newUser);
 
             setTimeout(() => {
               setLoading(false);
@@ -837,6 +860,8 @@
 
         const inputHash = await hashString(password);
 
+        let backendMode = null;
+
         try {
           const result = await postJSON("/user-data", {
             identifier,
@@ -844,13 +869,20 @@
           });
 
           if (result?.user) {
-            if(result.token) localStorage.setItem('prop_locker_token', result.token);
-            onLogin(result.user);
+            backendMode = "cloud";
+            if (typeof result?.token === "string") {
+              localStorage.setItem("prop_locker_token", result.token);
+              console.debug("[auth-token] tokenParts", result.token.split(".").length);
+            } else {
+              await requestAuthToken(result.user);
+            }
+            onLogin(result.user, backendMode);
             setLoading(false);
             return;
           }
 
           if (result?.mode === "local") {
+            backendMode = "local";
             console.info("Login backend in local mode, using local credential fallback.");
           }
         } catch (err) {
@@ -866,7 +898,13 @@
           );
 
           if (user) {
-            onLogin(user);
+            await requestAuthToken(user);
+            const token = localStorage.getItem("prop_locker_token");
+            const hasJwt = Boolean(
+              token &&
+              /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)
+            );
+            onLogin(user, hasJwt ? "cloud" : (backendMode || "local"));
           } else {
             setError("Invalid credentials. Please check your Email/ID and Password.");
           }
@@ -1419,7 +1457,7 @@
     /* ===========================
        ========== MAIN SUITE
        =========================== */
-    const LockerSuite = ({ onLogout, onSessionExpired }) => {
+    const LockerSuite = ({ onLogout, onSessionExpired, backendMode }) => {
       const [activeTab, setActiveTab] = useState("locker");
       const [phaseTab, setPhaseTab] = useState("evaluation");
       const [currentLockerId, setCurrentLockerId] = useState(null);
@@ -1621,6 +1659,11 @@
 
       const handleUpgrade = async () => {
         try {
+          if (backendMode !== "cloud") {
+            alert("Upgrades require cloud mode. Please configure Netlify Blobs / sign in to server mode.");
+            return;
+          }
+
           const token = localStorage.getItem("prop_locker_token");
           const tokenType = typeof token;
           const tokenLength = token ? token.length : 0;
@@ -1629,14 +1672,18 @@
             ? `${token.slice(0, 12)}...${token.slice(-12)}`
             : token || "";
           const willSetAuthHeader = Boolean(token);
+          const isValidJwt = Boolean(
+            token &&
+            /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)
+          );
 
           console.debug("[checkout] token type/length", { type: tokenType, length: tokenLength });
           console.debug("[checkout] token parts", tokenPartsCount);
           console.debug("[checkout] token masked", tokenPreview);
           console.debug("[checkout] authorization header set", willSetAuthHeader);
 
-          if (!token || tokenPartsCount !== 3) {
-            alert("Cloud checkout is unavailable in local mode. Sign in with cloud auth to upgrade.");
+          if (!isValidJwt || tokenPartsCount !== 3) {
+            alert("Upgrades require cloud mode. Please configure Netlify Blobs / sign in to server mode.");
             return;
           }
 
@@ -1989,58 +2036,74 @@
        ========== APP ROUTER (FIXED)
        =========================== */
     const App = () => {
-      const [appState, setAppState] = useState(() => localStorage.getItem('prop_locker_auth') === 'true' ? 'suite' : 'landing');
+      const [appState, setAppState] = useState(() => {
+        const token = localStorage.getItem("prop_locker_token");
+        const hasJwt = Boolean(
+          token &&
+          /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)
+        );
+        const persistedMode = localStorage.getItem("prop_locker_backend_mode");
+
+        return {
+          screen: localStorage.getItem('prop_locker_auth') === 'true' ? 'suite' : 'landing',
+          backendMode: persistedMode || (hasJwt ? "cloud" : "local")
+        };
+      });
       const [view, setView] = useState('landing');
       const [tempUserData, setTempUserData] = useState(null);
 
       const navigateTo = (v) => setView(v);
 
-      if (appState === 'landing' && view === 'about') return <AboutPage onBack={() => setView('landing')} />;
-      if (appState === 'landing' && view === 'how') return <HowItWorksPage onBack={() => setView('landing')} />;
-      if (appState === 'landing' && view === 'faq') return <FAQPage onBack={() => setView('landing')} />;
-      if (appState === 'landing' && view === 'signup') return (
+      if (appState.screen === 'landing' && view === 'about') return <AboutPage onBack={() => setView('landing')} />;
+      if (appState.screen === 'landing' && view === 'how') return <HowItWorksPage onBack={() => setView('landing')} />;
+      if (appState.screen === 'landing' && view === 'faq') return <FAQPage onBack={() => setView('landing')} />;
+      if (appState.screen === 'landing' && view === 'signup') return (
         <SignupPage
           onSignupSuccess={(user) => { setTempUserData(user); setView('signupSuccess'); }}
-          onNavigateToLogin={() => { setAppState('login'); setView('landing'); }}  /* FIX: normalize view */
+          onNavigateToLogin={() => { setAppState((s) => ({ ...s, screen: 'login' })); setView('landing'); }}  /* FIX: normalize view */
         />
       );
-      if (appState === 'landing' && view === 'signupSuccess') return (
+      if (appState.screen === 'landing' && view === 'signupSuccess') return (
         <SignupSuccessPage
           createdUser={tempUserData}
-          onGoToLogin={() => { setAppState('login'); setView('landing'); }} /* FIX */
+          onGoToLogin={() => { setAppState((s) => ({ ...s, screen: 'login' })); setView('landing'); }} /* FIX */
         />
       );
 
       return (
         <>
-          {appState === 'landing' && view === 'landing' && (
+          {appState.screen === 'landing' && view === 'landing' && (
             <LandingPage onStart={() => setView('signup')} onNavigate={navigateTo} />
           )}
 
-          {appState === 'login' && (
+          {appState.screen === 'login' && (
             <LoginPage
-              onLogin={(user) => {
+              onLogin={(user, backendMode) => {
                 localStorage.setItem('prop_locker_auth', 'true');
                 localStorage.setItem('prop_locker_current_user', JSON.stringify(user));
-                setAppState('suite');
+                const nextMode = backendMode || "local";
+                localStorage.setItem('prop_locker_backend_mode', nextMode);
+                setAppState({ screen: 'suite', backendMode: nextMode });
                 setView('landing'); /* FIX: normalize */
               }}
-              onNavigateToSignup={() => { setAppState('landing'); setView('signup'); }}
+              onNavigateToSignup={() => { setAppState((s) => ({ ...s, screen: 'landing' })); setView('signup'); }}
             />
           )}
 
-          {appState === 'suite' && (
-            <LockerSuite onLogout={() => {
+          {appState.screen === 'suite' && (
+            <LockerSuite backendMode={appState.backendMode} onLogout={() => {
               localStorage.removeItem('prop_locker_auth');
               localStorage.removeItem('prop_locker_current_user');
               localStorage.removeItem('prop_locker_token');
-              setAppState('landing');
+              localStorage.removeItem('prop_locker_backend_mode');
+              setAppState({ screen: 'landing', backendMode: 'local' });
               setView('landing');
             }} onSessionExpired={() => {
               localStorage.removeItem('prop_locker_auth');
               localStorage.removeItem('prop_locker_current_user');
               localStorage.removeItem('prop_locker_token');
-              setAppState('login');
+              localStorage.removeItem('prop_locker_backend_mode');
+              setAppState({ screen: 'login', backendMode: 'local' });
               setView('landing');
             }} />
           )}

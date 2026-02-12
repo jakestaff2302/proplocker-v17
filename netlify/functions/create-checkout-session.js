@@ -1,26 +1,6 @@
 const Stripe = require("stripe");
-const { json, parseBody } = require("./_lib/http");
+const { json, parseBody, verifyJwtFromEvent } = require("./_lib/http");
 const { getUserById, getUserByEmail, getUserByLoginId, setUser } = require("./_lib/db");
-
-function getBearerToken(event) {
-  const h = event.headers || {};
-  const auth = h.authorization || h.Authorization || "";
-  return auth.startsWith("Bearer ") ? auth.slice(7).trim() : auth.trim();
-}
-
-function decodeJwtPayload(token) {
-  const parts = String(token || "").split(".");
-  const payloadPart = parts[1];
-  const normalized = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
-  const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
-
-  try {
-    const jsonText = Buffer.from(padded, "base64").toString("utf8");
-    return { payload: JSON.parse(jsonText) };
-  } catch {
-    return { error: "Session token payload is malformed. Please log in again." };
-  }
-}
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return json(200, { ok: true });
@@ -35,27 +15,20 @@ exports.handler = async (event) => {
     if (!priceId) return json(500, { error: "Missing STRIPE_PRICE_ID" });
     if (!siteUrl) return json(500, { error: "Missing SITE_URL" });
 
-    const token = getBearerToken(event);
-    if (!token || token.split(".").length !== 3) {
+    let decoded;
+    try {
+      decoded = verifyJwtFromEvent(event);
+    } catch {
       return json(401, {
         error: "SESSION_EXPIRED",
-        message: "Session expired. Please log in again."
+        message: "Missing or invalid token. Please log in again."
       });
     }
-
-    const decodedResult = decodeJwtPayload(token);
-    if (decodedResult.error) {
-      return json(401, {
-        error: "SESSION_EXPIRED",
-        message: "Session expired. Please log in again."
-      });
-    }
-    const decoded = decodedResult.payload;
 
     if (!decoded || !decoded.sub) {
       return json(401, {
         error: "SESSION_EXPIRED",
-        message: "Session expired. Please log in again."
+        message: "Missing or invalid token. Please log in again."
       });
     }
 
@@ -71,7 +44,7 @@ exports.handler = async (event) => {
     if (!user) {
       return json(401, {
         error: "SESSION_EXPIRED",
-        message: "Session expired. Please log in again."
+        message: "Missing or invalid token. Please log in again."
       });
     }
 
