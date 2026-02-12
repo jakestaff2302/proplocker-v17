@@ -1,0 +1,15 @@
+{
+  "name": "proplocker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "resend": "^4.0.0",
+    "stripe": "^16.2.0"
+  }
+}

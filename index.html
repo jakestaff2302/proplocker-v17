@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Prop Locker - Professional Capital Management</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* --- Core Visuals & Background --- */
+    body {
+      background-color: #050505;
+      background-image: radial-gradient(circle at 50% 0%, #121212 0%, #000000 80%);
+      color: #e4e4e7;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding-bottom: 100px;
+    }
+
+    .bg-grid {
+      background-size: 60px 60px;
+      background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+      -webkit-mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+    }
+
+    .bg-grid-shine {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background-size: 60px 60px;
+      background-image:
+        linear-gradient(to right, rgba(109, 255, 198, 0.1) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(109, 255, 198, 0.1) 1px, transparent 1px);
+      mask-image:
+        linear-gradient(to right, transparent 0%, black 50%, transparent 100%),
+        radial-gradient(circle at center, black 30%, transparent 80%);
+      -webkit-mask-image:
+        linear-gradient(to right, transparent 0%, black 50%, transparent 100%),
+        radial-gradient(circle at center, black 30%, transparent 80%);
+      mask-size: 200% 100%, 100% 100%;
+      -webkit-mask-size: 200% 100%, 100% 100%;
+      mask-composite: intersect;
+      -webkit-mask-composite: source-in;
+      animation: grid-sweep 4s linear infinite;
+    }
+
+    @keyframes grid-sweep {
+      from { mask-position: -100% 0, 0 0; -webkit-mask-position: -100% 0, 0 0; }
+      to { mask-position: 100% 0, 0 0; -webkit-mask-position: 100% 0, 0 0; }
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #000000; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+    .font-data { font-family: "IBM Plex Sans", sans-serif; font-variant-numeric: tabular-nums; }
+    .font-logo { font-family: "Chakra Petch", sans-serif; }
+
+    .glass-panel {
+      background: rgba(20, 20, 23, 0.4);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .glass-card-strong {
+      background: linear-gradient(160deg, rgba(20, 20, 23, 0.95) 0%, rgba(10, 10, 12, 1) 100%);
+      backdrop-filter: blur(25px);
+      border: 1px solid rgba(109, 255, 198, 0.2);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 0 1px rgba(109, 255, 198, 0.05) inset;
+    }
+
+    .text-shine {
+      background: linear-gradient(to right, #6DFFC6 20%, #ffffff 50%, #6DFFC6 80%);
+      background-size: 200% auto;
+      color: #000;
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shine 4s linear infinite;
+    }
+    @keyframes shine { to { background-position: 200% center; } }
+
+    .text-glow-green { color: #6DFFC6; text-shadow: 0 0 15px rgba(109, 255, 198, 0.2); }
+    .bg-glow-green { background-color: #6DFFC6; }
+
+    .secure-module {
+      background: linear-gradient(135deg, #27272a 0%, #18181b 40%, #09090b 100%);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .secure-module::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(0,0,0,0.2) 1px, rgba(0,0,0,0.2) 2px);
+      opacity: 0.15;
+      pointer-events: none;
+    }
+
+    .secure-module:hover {
+      border-color: rgba(109, 255, 198, 0.4);
+      transform: translateY(-4px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(109, 255, 198, 0.1);
+    }
+
+    .stepper-btn {
+      background: #18181b;
+      border: 1px solid #3f3f46;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .stepper-btn:hover { background: #27272a; border-color: #6DFFC6; }
+
+    .switch-container {
+      width: 36px;
+      height: 18px;
+      background: #27272a;
+      border-radius: 99px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .switch-active { background: #6DFFC6; }
+    .switch-handle {
+      width: 14px;
+      height: 14px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: all 0.3s;
+    }
+    .switch-active .switch-handle { transform: translateX(18px); }
+
+    .expense-table th { text-align: left; padding: 16px; color: #71717a; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #18181b; }
+    .expense-table td { padding: 16px; border-bottom: 1px solid #18181b; font-size: 0.85rem; font-family: "IBM Plex Sans", sans-serif; }
+    .expense-table tr:hover td { background: rgba(109, 255, 198, 0.02); }
+
+    .pnl-toggle-btn {
+      padding: 4px 12px;
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-radius: 4px;
+      transition: all 0.2s;
+      color: #71717a;
+    }
+    .pnl-toggle-btn.active {
+      background: rgba(109, 255, 198, 0.1);
+      color: #6DFFC6;
+      box-shadow: 0 0 10px rgba(109, 255, 198, 0.1);
+    }
+
+    .account-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #3f3f46;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .account-checkbox.checked {
+      background: #6DFFC6;
+      border-color: #6DFFC6;
+      color: black;
+    }
+
+    .bulk-entry-bar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 48px);
+      max-width: 600px;
+      background: rgba(15, 15, 18, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(109, 255, 198, 0.3);
+      border-radius: 16px;
+      padding: 16px 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 20px rgba(109, 255, 198, 0.1);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slide-up {
+      from { transform: translate(-50%, 100px); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
+
+    .locker-card {
+      background: linear-gradient(160deg, #18181b 0%, #09090b 100%);
+      border: 1px solid #27272a;
+      border-radius: 16px;
+      padding: 0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 260px;
+    }
+    .locker-card:hover {
+      border-color: #6DFFC6;
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(109, 255, 198, 0.1);
+    }
+    .locker-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 4px;
+      background: #27272a;
+      transition: background 0.3s;
+      z-index: 10;
+    }
+    .locker-card:hover::before { background: #6DFFC6; }
+
+    .chart-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 80px;
+      opacity: 0.3;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .locker-card:hover .chart-container { opacity: 0.6; }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <div class="bg-grid"></div>
+  <div class="bg-grid-shine"></div>
+
+  <script type="text/babel">
+    (function ensureFonts(){
+      const links = ["IBM+Plex+Sans:wght@300;400;500;600;700;800", "Chakra+Petch:wght@600;700"];
+      links.forEach(f => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = `https://fonts.googleapis.com/css2?family=${f}&display=swap`;
+        document.head.appendChild(link);
+      });
+    })();
+
+    const { useEffect, useMemo, useState, useRef } = React;
+
+    // ---------- Crypto Helpers ----------
+    async function hashString(str) {
+      const msgBuffer = new TextEncoder().encode(str);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    const generateLoginId = () => "PL-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    // ---------- Netlify Backend Helpers ----------
+    const NETLIFY_FN_BASE = "/.netlify/functions";
+
+    async function postJSON(path, body) {
+      const res = await fetch(`${NETLIFY_FN_BASE}${path}`, {
+        method: "POST",
+        headers: {
+  "Content-Type": "application/json",
+  ...(localStorage.getItem("prop_locker_token")
+    ? { Authorization: `Bearer ${localStorage.getItem("prop_locker_token")}`
+ }
+    : {})
+},
+
+        body: JSON.stringify(body),
+      });
+      const text = await res.text();
+      let data;
+      try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+      if (!res.ok) {
+        const msg = data?.error || data?.message || `Request failed (${res.status})`;
+        throw new Error(msg);
+      }
+      return data;
+    }
+
+    async function getJSON(path) {
+  const token = localStorage.getItem("prop_locker_token");
+
+  const res = await fetch(`${NETLIFY_FN_BASE}${path}`, {
+    method: "GET",
+    headers: {
+      ...(token ? {Authorization: `Bearer ${token}` } : {})
+    }
+  });
+
+  const text = await res.text();
+  let data;
+  try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+
+  if (!res.ok) {
+    const msg = data?.error || data?.message || `Request failed (${res.status})`;
+    throw new Error(msg);
+  }
+  return data;
+}
+
+
+    // ---------- Backend Email Logic ----------
+    const sendLoginEmail = async (details) => {
+      try {
+        await postJSON("/send-login-email", {
+          email: details.email,
+          loginId: details.loginId,
+          name: details.name || "",
+          link: details.link || "https://proplocker.app/login",
+        });
+        return { ...details, sentVia: "backend" };
+      } catch (err) {
+        console.warn("Email backend unavailable, using preview fallback:", err?.message);
+
+        const outbox = JSON.parse(localStorage.getItem("prop_locker_email_outbox") || "[]");
+        outbox.push({ ...details, sentAt: new Date().toISOString(), sentVia: "preview" });
+        localStorage.setItem("prop_locker_email_outbox", JSON.stringify(outbox));
+
+        return { ...details, sentVia: "preview", error: err?.message || "Backend unavailable" };
+      }
+    };
+
+    // ---------- Helpers ----------
+    const fmt0 = (n) => new Intl.NumberFormat("en-US", { style:"currency", currency:"USD", maximumFractionDigits:0 }).format(n);
+    const nowISO = () => new Date().toISOString();
+    const yyyyMmDd = (d=new Date()) => {
+      const z = (x) => String(x).padStart(2,"0");
+      return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;
+    };
+
+    // ---------- Icons ----------
+    const IconBase = ({ children, size = 18, className = "" }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        {children}
+      </svg>
+    );
+
+    const Plus = (props) => <IconBase {...props}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></IconBase>;
+    const Minus = (props) => <IconBase {...props}><line x1="5" y1="12" x2="19" y2="12"/></IconBase>;
+    const Trash2 = (props) => <IconBase {...props}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></IconBase>;
+    const LockIcon = (props) => <IconBase {...props}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></IconBase>;
+    const ChevronDown = (props) => <IconBase {...props}><polyline points="6 9 12 15 18 9"/></IconBase>;
+    const XIcon = (props) => <IconBase {...props}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></IconBase>;
+    const MenuIcon = (props) => <IconBase {...props}><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></IconBase>;
+    const AlertCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></IconBase>;
+    const Check = (props) => <IconBase {...props}><polyline points="20 6 9 17 4 12"/></IconBase>;
+    const ArrowLeft = (props) => <IconBase {...props}><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></IconBase>;
+    const PieChart = (props) => <IconBase {...props}><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></IconBase>;
+    const Calendar = (props) => <IconBase {...props}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></IconBase>;
+    const Edit2 = (props) => <IconBase {...props}><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></IconBase>;
+    const Copy = (props) => <IconBase {...props}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></IconBase>;
+    const Save = (props) => <IconBase {...props}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1-2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></IconBase>;
+    const Layers = (props) => <IconBase {...props}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></IconBase>;
+    const FolderIcon = (props) => <IconBase {...props}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></IconBase>;
+    const LockerIcon = (props) => <IconBase {...props}><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><rect x="15" y="14" width="2" height="4" rx="1"/></IconBase>;
+    const MailIcon = (props) => <IconBase {...props}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></IconBase>;
+
+    function calculateDecision(account){
+      const rules = account.rules || {};
+      const totalProfit = account.currentBalance - account.startBalance;
+      const baseProfitTarget = account.profitGoal !== undefined ? account.profitGoal : (rules.payoutThresholdProfit || 3000);
+      const winningDays = account.winningDays || 0;
+
+      const maxDayProfit = (account.dailyLogs || []).reduce((m, l) => Math.max(m, l.pnl > 0 ? l.pnl : 0), 0);
+
+      // Handle 0% consistency correctly (0 = disabled)
+      const rawConsistency = rules.consistencyRule !== undefined ? rules.consistencyRule : 50;
+      let isConsistencyBreached = false;
+      let adjustedTarget = baseProfitTarget;
+
+      if (rawConsistency > 0) {
+        const consistencyThreshold = rawConsistency / 100;
+        const baseAllowance = baseProfitTarget * consistencyThreshold;
+
+        isConsistencyBreached = maxDayProfit > baseAllowance;
+        adjustedTarget = isConsistencyBreached
+          ? Math.max(baseProfitTarget, maxDayProfit / consistencyThreshold)
+          : baseProfitTarget;
+      }
+
+      const isProfitMet = totalProfit >= adjustedTarget;
+      const ddLimit = rules.drawdownLimit || 2000;
+      const ddLine = account.drawdownFloor ?? (account.startBalance - ddLimit);
+      const distanceToBreach = account.currentBalance - ddLine;
+
+      let status = "ACTIVE";
+      let color = "emerald";
+
+      if (distanceToBreach <= 0) {
+        status = "BREACHED"; color = "red";
+      } else if (isProfitMet) {
+        if (winningDays < (rules.minWinningDays || 5)) { status = "DAYS PENDING"; color = "zinc"; }
+        else {
+          status = account.phase === 'evaluation' ? "ACCOUNT PASSED" : "PAYOUT READY";
+          color = "emerald";
+        }
+      } else {
+        status = totalProfit < 0 ? "DRAWDOWN" : "ACTIVE";
+        color = totalProfit < 0 ? "red" : "emerald";
+      }
+
+      return {
+        status, color, distanceToBreach, profit: totalProfit,
+        canPayout: status === "PAYOUT READY" || status === "ACCOUNT PASSED",
+        thresholdAmount: adjustedTarget,
+        progress: Math.min(100, (totalProfit / adjustedTarget) * 100),
+        winGoalMet: winningDays >= (rules.minWinningDays || 5),
+        profitGoalMet: isProfitMet,
+        ddLine,
+        isConsistencyBreached,
+        maxDayProfit
+      };
+    }
+
+    const STORAGE_KEY = "prop_locker_v10";
+    const LOCKER_STORAGE_KEY = "prop_locker_lockers_v1";
+
+    const LogoMark = ({ className="", large=false }) => (
+      <div className={`flex items-center gap-2 ${className}`}>
+        <div className={`${large ? 'w-4 h-4' : 'w-2 h-2'} bg-glow-green rounded-full shadow-[0_0_10px_#6DFFC6]`}></div>
+        <div className={`${large ? 'text-4xl md:text-5xl' : 'text-lg'} font-bold tracking-[0.25em] text-white font-logo uppercase`}>
+          PROP<span className="text-glow-green">LOCKER</span>
+        </div>
+      </div>
+    );
+
+    // --- Info Pages (About, How, FAQ) ---
+    const AboutPage = ({ onBack }) => (
+      <div className="min-h-screen flex flex-col p-8 max-w-4xl mx-auto animate-fade-in pb-32">
+        <button onClick={onBack} className="flex items-center gap-2 text-zinc-500 hover:text-white mb-8 transition-colors"><ArrowLeft size={20}/> Back Home</button>
+        <h1 className="text-4xl font-black text-white font-logo uppercase mb-6">About Prop Locker</h1>
+        <div className="glass-card-strong p-8 rounded-2xl space-y-6 text-zinc-300 leading-relaxed text-sm">
+          <p>Prop Locker is a professional capital and performance management terminal built for traders who treat trading like a business — not a hobby.</p>
+          <p>Funded trading is no longer just about passing evaluations. It’s about maintaining discipline, protecting capital, and scaling responsibly across multiple firms and accounts. Prop Locker exists to bring structure, clarity, and accountability to that process.</p>
+          <p className="text-glow-green font-bold">We believe profitable traders don’t guess — they measure.</p>
+
+          <h2 className="text-2xl font-bold text-white mt-8 mb-4">Our Mission</h2>
+          <p>Our mission is simple: <strong>help traders master their capital through structure, data, and consistency.</strong></p>
+          <p>Prop Locker was designed to remove chaos from funded trading by giving traders a single, clear system to:</p>
+          <ul className="list-disc pl-5 space-y-1 text-zinc-400">
+            <li>Track multiple prop firms and accounts</li>
+            <li>Enforce rules and risk limits</li>
+            <li>Monitor progress toward payouts and funding milestones</li>
+            <li>Make objective, data-driven decisions</li>
+          </ul>
+          <p>No spreadsheets. No mental accounting. No shortcuts. <strong>Built to replace spreadsheets, notes, and memory.</strong></p>
+
+          <h2 className="text-2xl font-bold text-white mt-8 mb-4">Why Prop Locker Exists</h2>
+          <p>Most trading tools focus on charts and execution. <strong>Very few focus on capital management after the trade.</strong></p>
+          <p>Prop firms impose strict rules — drawdowns, consistency limits, payout thresholds — yet traders are expected to manage this complexity manually. That gap is where Prop Locker lives.</p>
+          <p>Prop Locker acts as your capital command centre, helping you understand:</p>
+          <ul className="list-disc pl-5 space-y-1 text-zinc-400">
+            <li>Where you are in the evaluation or funded process</li>
+            <li>How close you are to breaching rules</li>
+            <li>Whether your performance is sustainable or fragile</li>
+            <li>When scaling is justified — and when it’s not</li>
+          </ul>
+
+          <h2 className="text-2xl font-bold text-white mt-8 mb-4">Built for Serious Traders</h2>
+          <p>Prop Locker is built for:</p>
+          <ul className="list-disc pl-5 space-y-1 text-zinc-400">
+            <li>Funded traders managing multiple accounts</li>
+            <li>Evaluation traders aiming for long-term scalability</li>
+            <li>Traders who value discipline over dopamine</li>
+            <li>Anyone treating trading as a professional operation</li>
+          </ul>
+          <p className="mt-4 border-l-2 border-glow-green pl-4 italic">
+            This is not a broker.<br/>
+            This is not a signal service.<br/>
+            This is not a get-rich-quick tool.<br/>
+            <strong>Prop Locker is infrastructure.</strong>
+          </p>
+
+          <h2 className="text-2xl font-bold text-white mt-8 mb-4">Privacy by Design</h2>
+          <p><strong>Your data stays local (unless you Go Pro).</strong></p>
+          <p>Prop Locker supports local-first data storage. Upgrade to Cloud Sync for multi-device access.</p>
+
+          <h2 className="text-2xl font-bold text-white mt-8 mb-4">The Philosophy</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-black/40 rounded-xl border border-zinc-800 text-center"><h3 className="font-bold text-white mb-2">Process</h3><p className="text-xs">Capital is earned through process, not luck.</p></div>
+            <div className="p-4 bg-black/40 rounded-xl border border-zinc-800 text-center"><h3 className="font-bold text-white mb-2">Consistency</h3><p className="text-xs">Consistency beats intensity.</p></div>
+            <div className="p-4 bg-black/40 rounded-xl border border-zinc-800 text-center"><h3 className="font-bold text-white mb-2">Edge</h3><p className="text-xs">Risk management is the real edge.</p></div>
+          </div>
+        </div>
+      </div>
+    );
+
+    const HowItWorksPage = ({ onBack }) => (
+      <div className="min-h-screen flex flex-col p-8 max-w-4xl mx-auto animate-fade-in pb-32">
+        <button onClick={onBack} className="flex items-center gap-2 text-zinc-500 hover:text-white mb-8 transition-colors"><ArrowLeft size={20}/> Back Home</button>
+        <h1 className="text-4xl font-black text-white font-logo uppercase mb-6">How It Works</h1>
+        <div className="space-y-6">
+          <div className="glass-card-strong p-6 rounded-2xl border border-zinc-800">
+            <div className="text-glow-green text-xl font-bold mb-2">Step 1: Create a Locker (Organisational Container)</div>
+            <p className="text-zinc-400 text-sm">Organize your portfolio by creating a "Locker" for each Prop Firm (e.g., "Topstep Locker"). This acts as an <strong>organisational container</strong> for all your accounts under that entity.</p>
+          </div>
+          <div className="glass-card-strong p-6 rounded-2xl border border-zinc-800">
+            <div className="text-glow-green text-xl font-bold mb-2">Step 2: Add Accounts inside Lockers</div>
+            <p className="text-zinc-400 text-sm">Add Evaluation or Funded accounts to your lockers. Customize parameters like profit targets, max drawdown, and consistency rules. Rules are enforced by the system to ensure compliance.</p>
+          </div>
+          <div className="glass-card-strong p-6 rounded-2xl border border-zinc-800">
+            <div className="text-glow-green text-xl font-bold mb-2">Step 3: Log trades, sessions, and emotions</div>
+            <p className="text-zinc-400 text-sm">Log daily trades and PnL. The system automatically tracks your equity curve and alerts you to any rule breaches. <strong>Logs update capital state</strong> in real-time.</p>
+          </div>
+          <div className="glass-card-strong p-6 rounded-2xl border border-zinc-800">
+            <div className="text-glow-green text-xl font-bold mb-2">Step 4: Review performance and discipline metrics</div>
+            <p className="text-zinc-400 text-sm">Review detailed performance metrics. Identify strengths and weaknesses in your trading strategy.</p>
+          </div>
+          <div className="glass-card-strong p-6 rounded-2xl border border-zinc-800">
+            <div className="text-glow-green text-xl font-bold mb-2">Step 5: Scale only when data allows</div>
+            <p className="text-zinc-400 text-sm">Use data-backed decisions to scale your capital. Move passed evaluations to "Funded" status with a single click and track your growth. <strong>Scaling only when data allows</strong> is key to longevity.</p>
+          </div>
+        </div>
+      </div>
+    );
+
+    const FAQPage = ({ onBack }) => (
+      <div className="min-h-screen flex flex-col p-8 max-w-4xl mx-auto animate-fade-in pb-32">
+        <button onClick={onBack} className="flex items-center gap-2 text-zinc-500 hover:text-white mb-8 transition-colors"><ArrowLeft size={20}/> Back Home</button>
+        <h1 className="text-4xl font-black text-white font-logo uppercase mb-6">FAQ</h1>
+        <div className="space-y-4">
+          <div className="glass-card-strong p-6 rounded-xl border border-zinc-800">
+            <h3 className="font-bold text-white mb-2">Is my data stored locally?</h3>
+            <p className="text-zinc-400 text-sm">Yes, unless you use the Pro subscription which enables secure Cloud Sync.</p>
+          </div>
+          <div className="glass-card-strong p-6 rounded-xl border border-zinc-800">
+            <h3 className="font-bold text-white mb-2">Can I track multiple firms and accounts?</h3>
+            <p className="text-zinc-400 text-sm">Yes. Multi-firm support is built-in. You can create unlimited Lockers for different firms and add multiple accounts to each.</p>
+          </div>
+          <div className="glass-card-strong p-6 rounded-xl border border-zinc-800">
+            <h3 className="font-bold text-white mb-2">Does this work on mobile?</h3>
+            <p className="text-zinc-400 text-sm">Yes – fully responsive on all mobile devices and tablets.</p>
+          </div>
+          <div className="glass-card-strong p-6 rounded-xl border border-zinc-800">
+            <h3 className="font-bold text-white mb-2">Is Prop Locker a broker?</h3>
+            <p className="text-zinc-400 text-sm">No. Not a broker, not signals. Prop Locker is a terminal for tracking and managing your trading business.</p>
+          </div>
+          <div className="glass-card-strong p-6 rounded-xl border border-zinc-800">
+            <h3 className="font-bold text-white mb-2">Who is this built for?</h3>
+            <p className="text-zinc-400 text-sm">Funded and serious retail traders who need professional infrastructure.</p>
+          </div>
+        </div>
+      </div>
+    );
+
+    const LandingPage = ({ onStart, onNavigate }) => {
+      const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+      const NavLink = ({ title, target }) => (
+        <button
+          onClick={() => onNavigate(target)}
+          className="text-sm font-bold text-zinc-400 hover:text-white transition-colors uppercase tracking-wider focus:outline-none"
+        >
+          {title}
+        </button>
+      );
+
+      return (
+        <div className="min-h-screen flex flex-col animate-fade-in relative">
+          <div className="w-full p-6 flex justify-between items-center z-20 max-w-[1800px] mx-auto">
+            <LogoMark />
+
+            <div className="hidden md:flex items-center gap-12">
+              <NavLink title="About us" target="about" />
+              <NavLink title="How it works" target="how" />
+              <NavLink title="FAQ" target="faq" />
+            </div>
+
+            <div className="md:hidden">
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-white p-2">
+                {mobileMenuOpen ? <XIcon /> : <MenuIcon />}
+              </button>
+            </div>
+
+            <div className="hidden md:flex items-center gap-4">
+              <button onClick={onStart} className="text-sm font-bold bg-glow-green text-black px-8 py-3 rounded-full hover:bg-white transition-all shadow-[0_0_20px_rgba(109,255,198,0.2)] hover:shadow-[0_0_30px_rgba(109,255,198,0.4)]">SIGN UP</button>
+            </div>
+          </div>
+
+          {mobileMenuOpen && (
+            <div className="absolute inset-0 bg-black/95 z-10 flex flex-col items-center justify-center space-y-8 animate-fade-in md:hidden">
+              <button onClick={() => { onNavigate('about'); setMobileMenuOpen(false); }} className="text-2xl font-bold text-white uppercase tracking-widest">About Us</button>
+              <button onClick={() => { onNavigate('how'); setMobileMenuOpen(false); }} className="text-2xl font-bold text-white uppercase tracking-widest">How It Works</button>
+              <button onClick={() => { onNavigate('faq'); setMobileMenuOpen(false); }} className="text-2xl font-bold text-white uppercase tracking-widest">FAQ</button>
+              <button onClick={onStart} className="text-xl font-bold text-glow-green uppercase tracking-widest border border-glow-green px-8 py-3 rounded-full mt-8">SIGN UP</button>
+            </div>
+          )}
+
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-4 z-0 mt-[-5vh]">
+            <div className="inline-block px-3 py-1 rounded-full border border-glow-green/20 bg-glow-green/5 text-glow-green text-[10px] font-bold tracking-[0.2em] uppercase mb-6">System Protocol v17.0.0</div>
+            <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-6 font-logo uppercase leading-none">MASTER YOUR<br/><span className="text-shine">CAPITAL</span></h1>
+            <button onClick={onStart} className="px-12 py-4 bg-white text-black font-bold text-sm tracking-widest rounded-full hover:bg-glow-green transition-all shadow-[0_0_30px_rgba(255,255,255,0.2)]">SIGN UP</button>
+          </div>
+        </div>
+      );
+    };
+
+    const SignupPage = ({ onSignupSuccess, onNavigateToLogin }) => {
+      const [formData, setFormData] = useState({ name: "", email: "", password: "", confirm: "", agree: false });
+      const [autoGen, setAutoGen] = useState(false);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState("");
+
+      const generatePassword = () => {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+        let pass = "";
+        for(let i=0; i<16; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        setFormData(prev => ({...prev, password: pass, confirm: pass}));
+      };
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+
+        if (!formData.name || !formData.email || !formData.password) return setError("All fields required");
+        if (!formData.agree) return setError("You must agree to the terms");
+        if (!autoGen && formData.password !== formData.confirm) return setError("Passwords do not match");
+        if (formData.password.length < 10) return setError("Password must be at least 10 characters");
+        if (!/\S+@\S+\.\S+/.test(formData.email)) return setError("Invalid email format");
+
+        setLoading(true);
+
+        try {
+          const passwordHash = await hashString(formData.password);
+          const loginId = generateLoginId();
+
+          const result = await postJSON("/user-upsert", {
+            name: formData.name,
+            email: formData.email,
+            passwordHash: passwordHash,
+            loginId: loginId
+          });
+
+          const created = {
+            name: result.name || formData.name,
+            email: result.email || formData.email,
+            loginId: result.login_id || result.loginId || loginId,
+            hasActiveSubscription: false,
+          };
+
+          await sendLoginEmail({
+            email: created.email,
+            loginId: created.loginId,
+            name: created.name
+          });
+
+          setLoading(false);
+          onSignupSuccess(created);
+
+        } catch (err) {
+          console.warn("Backend signup failed, falling back to localStorage:", err?.message);
+
+          try {
+            const passwordHash = await hashString(formData.password);
+            const loginId = generateLoginId();
+            const newUser = {
+              id: crypto.randomUUID(),
+              loginId,
+              name: formData.name,
+              email: formData.email,
+              passwordHash,
+              createdAt: new Date().toISOString(),
+              hasActiveSubscription: false
+            };
+
+            const users = JSON.parse(localStorage.getItem('prop_locker_users_v1') || '[]');
+            users.push(newUser);
+            localStorage.setItem('prop_locker_users_v1', JSON.stringify(users));
+
+            await sendLoginEmail({
+              email: newUser.email,
+              loginId: newUser.loginId,
+              name: newUser.name
+            });
+
+            setTimeout(() => {
+              setLoading(false);
+              onSignupSuccess(newUser);
+            }, 1000);
+
+          } catch (err2) {
+            setError("Error creating account. Please try again.");
+            setLoading(false);
+          }
+        }
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 animate-enter">
+          <div className="glass-card-strong p-8 rounded-3xl w-full max-w-md border border-glow-green/20 shadow-2xl">
+            <h2 className="text-white text-2xl font-bold font-logo tracking-widest uppercase text-center mb-6">Create Account</h2>
+            {error && <div className="bg-red-500/10 border border-red-500/50 text-red-400 text-xs p-3 rounded mb-4 text-center font-bold">{error}</div>}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Full Name</label>
+                <input type="text" className="w-full bg-black/40 border-b border-zinc-800 px-4 py-2 text-white text-sm focus:border-glow-green outline-none transition-colors" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} placeholder="John Trader" />
+              </div>
+              <div>
+                <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Email Address</label>
+                <input type="email" className="w-full bg-black/40 border-b border-zinc-800 px-4 py-2 text-white text-sm focus:border-glow-green outline-none transition-colors" value={formData.email} onChange={e=>setFormData({...formData, email: e.target.value})} placeholder="trader@firm.com" />
+              </div>
+
+              <div className="pt-2">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Password</label>
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setAutoGen(!autoGen); if(!autoGen) generatePassword(); else setFormData({...formData, password:"", confirm:""}); }}>
+                    <div className={`w-3 h-3 rounded-full border border-zinc-600 ${autoGen ? 'bg-glow-green' : ''}`}></div>
+                    <span className="text-[10px] text-zinc-400 font-bold uppercase">Auto-Generate</span>
+                  </div>
+                </div>
+                <input type={autoGen ? "text" : "password"} className="w-full bg-black/40 border-b border-zinc-800 px-4 py-2 text-white text-sm focus:border-glow-green outline-none font-mono" value={formData.password} onChange={e=>setFormData({...formData, password: e.target.value})} placeholder="Minimum 10 chars" readOnly={autoGen} />
+              </div>
+
+              {!autoGen && (
+                <div>
+                  <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Confirm Password</label>
+                  <input type="password" className="w-full bg-black/40 border-b border-zinc-800 px-4 py-2 text-white text-sm focus:border-glow-green outline-none transition-colors" value={formData.confirm} onChange={e=>setFormData({...formData, confirm: e.target.value})} />
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 pt-2">
+                <div className={`w-5 h-5 border border-zinc-600 rounded flex items-center justify-center cursor-pointer ${formData.agree ? 'bg-glow-green border-glow-green' : 'bg-black/40'}`} onClick={()=>setFormData({...formData, agree: !formData.agree})}>
+                  {formData.agree && <Check size={14} className="text-black" />}
+                </div>
+                <span className="text-xs text-zinc-400">I agree to the <span className="text-white underline cursor-pointer">Terms of Service</span> & Privacy Policy.</span>
+              </div>
+
+              <button type="submit" disabled={loading} className="w-full bg-glow-green hover:bg-white text-black font-bold py-4 rounded-xl transition-all mt-4 flex items-center justify-center gap-2 uppercase tracking-widest shadow-[0_0_20px_rgba(109,255,198,0.2)]">
+                {loading ? <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></span> : "CREATE ACCOUNT"}
+              </button>
+            </form>
+            <div className="mt-6 text-center">
+              <button onClick={onNavigateToLogin} className="text-xs text-zinc-500 hover:text-white uppercase tracking-widest font-bold">Already have an account? Login</button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const SignupSuccessPage = ({ createdUser, onGoToLogin }) => {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 animate-enter py-12">
+          <div className="max-w-2xl w-full space-y-8">
+            <div className="glass-card-strong p-10 rounded-3xl border border-glow-green shadow-[0_0_50px_rgba(109,255,198,0.1)] text-center">
+              <div className="w-16 h-16 bg-glow-green/20 rounded-full flex items-center justify-center mx-auto mb-6 text-glow-green border border-glow-green"><Check size={32} /></div>
+              <h2 className="text-3xl font-black text-white font-logo uppercase tracking-widest mb-2">Account Created</h2>
+              <p className="text-zinc-400 text-sm mb-8">Your secure infrastructure is ready. We have sent your login details to {createdUser?.email || "your email"}.</p>
+
+              <div className="bg-black/60 border border-zinc-800 rounded-xl p-6 mb-8 max-w-sm mx-auto">
+                <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Your Login ID</div>
+                <div className="text-3xl font-mono font-bold text-white tracking-wider select-all">{createdUser?.loginId || "PL-XXXXXX"}</div>
+              </div>
+
+              <button onClick={onGoToLogin} className="px-10 py-4 bg-white text-black font-bold text-sm tracking-widest rounded-full hover:bg-glow-green transition-all shadow-lg">GO TO LOGIN</button>
+            </div>
+
+            {/* DEV ONLY: Email Preview (Conditional) */}
+            <div className="border border-dashed border-zinc-700 rounded-2xl p-6 opacity-75">
+              <div className="flex items-center gap-2 mb-4 text-zinc-500 text-xs font-bold uppercase tracking-widest">
+                <MailIcon size={14} /> Dev: Backend Email Fallback View
+              </div>
+              <div className="bg-white text-black p-6 rounded-lg font-mono text-sm leading-relaxed shadow-xl">
+                <div className="border-b border-gray-200 pb-2 mb-4">
+                  <span className="text-gray-500">To:</span> {createdUser?.email || "your@email.com"}<br/>
+                  <span className="text-gray-500">Subject:</span> Welcome to Prop Locker - Your Login Details
+                </div>
+                <p>Welcome {createdUser?.name || "Trader"},</p>
+                <p>Your Prop Locker terminal account has been provisioned.</p>
+                <p className="my-4 p-4 bg-gray-100 rounded border border-gray-300">
+                  <strong>Login ID:</strong> {createdUser?.loginId || "PL-XXXXXX"}
+                </p>
+                <p>Access your terminal here: <a href="#" className="text-blue-600 underline">https://proplocker.app/login</a></p>
+                <p className="mt-4 text-xs text-gray-500">Infrastructure for professional traders.</p>
+              </div>
+              <p className="text-center text-[10px] text-zinc-600 mt-2 uppercase font-bold">If ENV VARS are set, this was sent via Resend.</p>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const LoginPage = ({ onLogin, onNavigateToSignup }) => {
+      const [identifier, setIdentifier] = useState("");
+      const [password, setPassword] = useState("");
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState("");
+
+      const handleLogin = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError("");
+
+        const inputHash = await hashString(password);
+
+        try {
+          const result = await postJSON("/user-data", {
+            identifier,
+            passwordHash: inputHash,
+          });
+
+          if (result?.user) {
+            if(result.token) localStorage.setItem('prop_locker_token', result.token);
+            onLogin(result.user);
+            setLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.warn("Backend login failed, falling back to localStorage:", err?.message);
+        }
+
+        setTimeout(async () => {
+          const users = JSON.parse(localStorage.getItem('prop_locker_users_v1') || '[]');
+
+          const user = users.find(u =>
+            (u.email.toLowerCase() === identifier.toLowerCase() || u.loginId === identifier) &&
+            u.passwordHash === inputHash
+          );
+
+          if (user) {
+            onLogin(user);
+          } else {
+            setError("Invalid credentials. Please check your Email/ID and Password.");
+          }
+          setLoading(false);
+        }, 800);
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 animate-enter">
+          <div className="glass-card-strong p-10 rounded-3xl w-full max-sm:max-w-xs max-w-sm border border-glow-green/20 shadow-2xl relative">
+            <div className="flex flex-col items-center mb-8">
+              <div className="w-12 h-12 bg-zinc-900 rounded-xl flex items-center justify-center border border-white/10 mb-4 shadow-glow-green/10 group"><LockIcon size={20} className="text-zinc-500 group-hover:text-glow-green transition-colors duration-500"/></div>
+              <h2 className="text-white text-xl font-bold font-logo tracking-widest uppercase text-center">Secure Access</h2>
+            </div>
+            {error && <div className="bg-red-500/10 border border-red-500/50 text-red-400 text-[10px] p-3 rounded mb-4 text-center font-bold uppercase">{error}</div>}
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div>
+                <input type="text" className="w-full bg-black/40 border-b border-zinc-800 px-4 py-2 text-white text-sm focus:border-glow-green outline-none" placeholder="Email or Login ID" value={identifier} onChange={e=>setIdentifier(e.target.value)} />
+              </div>
+              <div>
+                <input type="password" className="w-full bg-black/40 border-b border-zinc-800 px-4 py-2 text-white text-sm focus:border-glow-green outline-none" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} />
+              </div>
+              <button type="submit" disabled={loading} className="w-full bg-glow-green hover:bg-white text-black font-bold py-4 rounded-xl transition-all mt-4 flex items-center justify-center gap-2 uppercase tracking-widest">
+                {loading ? <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></span> : "Establish Connection"}
+              </button>
+            </form>
+            <div className="mt-6 text-center">
+              <button onClick={onNavigateToSignup} className="text-xs text-zinc-500 hover:text-white uppercase tracking-widest font-bold">New user? Sign Up</button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const AddLockerModal = ({ isOpen, onClose, onAdd, editLocker }) => {
+      const [name, setName] = useState("");
+      const [firm, setFirm] = useState("Alpha Futures");
+      const [customFirm, setCustomFirm] = useState("");
+      const [isOther, setIsOther] = useState(false);
+
+      useEffect(() => {
+        if(editLocker) {
+          setName(editLocker.name || "");
+          if (["Alpha Futures", "Topstep", "MyFundedFutures"].includes(editLocker.firm)) {
+            setFirm(editLocker.firm);
+            setIsOther(false);
+          } else {
+            setCustomFirm(editLocker.firm);
+            setIsOther(true);
+          }
+        } else {
+          setName("");
+          setFirm("Alpha Futures");
+          setCustomFirm("");
+          setIsOther(false);
+        }
+      }, [editLocker, isOpen]);
+
+      if(!isOpen) return null;
+      return (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
+          <div className="glass-card-strong w-full max-w-sm rounded-2xl animate-modal border-zinc-800 overflow-hidden">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-800">
+              <h3 className="font-bold text-white uppercase tracking-widest text-sm">{editLocker ? 'Rename Locker' : 'New Locker'}</h3>
+              <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors"><XIcon size={20}/></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Locker Name</label>
+                <input type="text" placeholder="e.g. Apex Challenge" className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-3 px-4 text-white text-sm font-bold focus:border-glow-green outline-none" value={name} onChange={e=>setName(e.target.value)} autoFocus />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Prop Firm</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-zinc-500 font-bold uppercase">Other</span>
+                    <div className={`switch-container ${isOther ? 'switch-active' : ''}`} onClick={() => setIsOther(!isOther)}>
+                      <div className="switch-handle"></div>
+                    </div>
+                  </div>
+                </div>
+                {isOther ? (
+                  <input type="text" placeholder="Type Firm Name..." className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2.5 px-4 text-sm text-white font-bold outline-none focus:border-glow-green animate-fade-in" value={customFirm} onChange={e=>setCustomFirm(e.target.value)}/>
+                ) : (
+                  <select className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2.5 px-4 text-sm text-white font-bold outline-none focus:border-glow-green transition-all" value={firm} onChange={e=>setFirm(e.target.value)}>
+                    <option>Alpha Futures</option><option>Topstep</option><option>MyFundedFutures</option>
+                  </select>
+                )}
+              </div>
+
+              <button onClick={() => { if(name) { onAdd({id: editLocker?.id || Date.now(), name, firm: isOther ? customFirm : firm}); onClose(); } }} className="w-full bg-glow-green hover:bg-white text-black font-bold py-3 rounded-lg uppercase tracking-widest text-xs transition-all">{editLocker ? 'Update Locker' : 'Create Locker'}</button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // NOTE: The rest of your app (AddAccountModal, AccountCard, LockerSuite, App)
+    // is unchanged EXCEPT for two fixes:
+    // 1) LockerSuite no longer references setView (was causing runtime crash)
+    // 2) App normalizes view when switching appState to login/suite.
+
+    /* ===========================
+       ========== ADDACCOUNTMODAL
+       =========================== */
+    const AddAccountModal = ({ isOpen, onClose, onAdd, editAccount, lockers, currentLockerId }) => {
+      const [step, setStep] = useState(1);
+
+      const [formData, setFormData] = useState({
+        internalName: "", firm: "Alpha Futures", customFirm: "", size: "$50k", program: "Advanced Plan - 1-Step",
+        minTradingDays: 5, profitTarget: 3000, maxDailyLoss: 1000, maxTotalLoss: 2000,
+        consistencyRule: 50, minWinReq: 100, isOther: false, phase: "evaluation", cost: "", lockerId: ""
+      });
+
+      useEffect(() => {
+        if (editAccount && editAccount.id) {
+          const rules = editAccount.rules || {};
+          setFormData({
+            internalName: editAccount.name || "",
+            firm: editAccount.firm || "Alpha Futures",
+            customFirm: editAccount.firm || "",
+            size: editAccount.startBalance ? `$${(editAccount.startBalance / 1000)}k` : "$50k",
+            program: editAccount.planId || "Advanced Plan - 1-Step",
+            minTradingDays: rules.minWinningDays || 5,
+            profitTarget: editAccount.profitGoal || 3000,
+            maxDailyLoss: 1000,
+            maxTotalLoss: rules.drawdownLimit || 2000,
+            consistencyRule: rules.consistencyRule || 50,
+            minWinReq: rules.minWinReq || 100,
+            isOther: !["Alpha Futures", "Topstep", "MyFundedFutures"].includes(editAccount.firm),
+            phase: editAccount.phase || "evaluation",
+            cost: editAccount.cost || "",
+            lockerId: editAccount.lockerId || ""
+          });
+        } else {
+          const contextLockerId = (editAccount && editAccount.lockerId) || currentLockerId;
+          const contextPhase = (editAccount && editAccount.phase) || "evaluation";
+          const contextLocker = lockers.find(l => l.id === contextLockerId);
+
+          const defaultFirm = contextLocker ? contextLocker.firm : "Alpha Futures";
+          const isDefaultOther = contextLocker && !["Alpha Futures", "Topstep", "MyFundedFutures"].includes(contextLocker.firm);
+
+          setFormData({
+            internalName: "",
+            firm: isDefaultOther ? "Alpha Futures" : defaultFirm,
+            customFirm: isDefaultOther ? defaultFirm : "",
+            isOther: isDefaultOther,
+            size: "$50k",
+            program: "Advanced Plan - 1-Step",
+            minTradingDays: 5, profitTarget: 3000, maxDailyLoss: 1000, maxTotalLoss: 2000,
+            consistencyRule: 50, minWinReq: 100,
+            phase: contextPhase,
+            cost: "",
+            lockerId: contextLockerId || ""
+          });
+        }
+      }, [editAccount, isOpen, currentLockerId, lockers]);
+
+      if (!isOpen) return null;
+
+      const handleAdd = () => {
+        const finalLockerId = formData.lockerId;
+        const finalFirm = formData.isOther ? (formData.customFirm || "Custom Firm") : formData.firm;
+
+        let baseSize = parseInt(formData.size.replace(/\D/g, '')) || 50;
+        if (formData.size.toLowerCase().includes('k')) baseSize *= 1000;
+
+        const isEditing = editAccount && editAccount.id;
+
+        onAdd({
+          id: isEditing ? editAccount.id : Date.now(),
+          name: formData.internalName || `${finalFirm} ${formData.size}`,
+          firm: finalFirm,
+          planId: formData.program,
+          startBalance: baseSize,
+          currentBalance: isEditing ? editAccount.currentBalance : baseSize,
+          maxEquity: isEditing ? editAccount.maxEquity : baseSize,
+          rules: {
+            minWinningDays: formData.minTradingDays,
+            payoutThresholdProfit: formData.profitTarget,
+            drawdownLimit: formData.maxTotalLoss,
+            consistencyRule: formData.consistencyRule,
+            minWinReq: formData.minWinReq,
+            drawdownType: "static"
+          },
+          phase: formData.phase,
+          winningDays: isEditing ? editAccount.winningDays : 0,
+          profitGoal: formData.profitTarget,
+          cost: Number(formData.cost) || 0,
+          dailyLogs: isEditing ? (editAccount.dailyLogs || []) : [],
+          activity: isEditing ? (editAccount.activity || []) : [],
+          startDate: isEditing ? editAccount.startDate : yyyyMmDd(),
+          lockerId: Number(finalLockerId)
+        });
+        onClose(); setStep(1);
+      };
+
+      return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
+          <div className="glass-card-strong w-full max-w-md rounded-2xl overflow-hidden animate-modal border-zinc-800">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-800/50">
+              <h3 className="font-bold text-lg text-white uppercase tracking-wider">{editAccount && editAccount.id ? "Edit Module" : "Add Module"}</h3>
+              <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors"><XIcon size={20}/></button>
+            </div>
+            <div className="flex gap-1 px-6 py-4">
+              <div className={`h-1.5 flex-1 rounded-full transition-colors ${step >= 1 ? "bg-glow-green" : "bg-zinc-800"}`}></div>
+              <div className={`h-1.5 flex-1 rounded-full transition-colors ${step >= 2 ? "bg-glow-green" : "bg-zinc-800"}`}></div>
+            </div>
+            {step === 1 ? (
+              <div className="p-6 space-y-6">
+                <div className="space-y-1">
+                  <label className="text-[10px] text-white font-bold uppercase tracking-widest">Internal Account Name</label>
+                  <input type="text" placeholder="e.g. My Main Eval" className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2.5 px-4 text-sm text-white font-bold outline-none focus:border-glow-green transition-all" value={formData.internalName} onChange={e=>setFormData({...formData, internalName: e.target.value})}/>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-white font-bold uppercase tracking-widest">Account Phase</label>
+                      <select className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2.5 px-4 text-sm text-white font-bold outline-none" value={formData.phase} onChange={e=>setFormData({...formData, phase: e.target.value})}>
+                        <option value="evaluation">Evaluation</option><option value="funded">Funded</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[10px] text-white font-bold uppercase tracking-widest">Prop Firm {formData.lockerId ? "(Locked)" : ""}</span>
+                        {!formData.lockerId && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-zinc-500 font-bold uppercase">Other</span>
+                            <div className={`switch-container ${formData.isOther ? 'switch-active' : ''}`} onClick={() => setFormData({...formData, isOther: !formData.isOther})}>
+                              <div className="switch-handle"></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        {formData.lockerId ? (
+                          <input type="text" disabled className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg py-2.5 px-4 text-sm text-zinc-400 font-bold outline-none cursor-not-allowed" value={formData.isOther ? formData.customFirm : formData.firm} />
+                        ) : (
+                          formData.isOther ? (
+                            <input type="text" placeholder="Type Firm Name..." className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2.5 px-4 text-sm text-white font-bold outline-none focus:border-glow-green animate-fade-in" value={formData.customFirm} onChange={e=>setFormData({...formData, customFirm: e.target.value})}/>
+                          ) : (
+                            <select className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2.5 px-4 text-sm text-white font-bold outline-none focus:border-glow-green transition-all" value={formData.firm} onChange={e=>setFormData({...formData, firm: e.target.value})}>
+                              <option>Alpha Futures</option><option>Topstep</option><option>MyFundedFutures</option>
+                            </select>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-white font-bold uppercase tracking-widest">Account Size</label>
+                      <select className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2.5 px-4 text-sm text-white font-bold outline-none focus:border-glow-green" value={formData.size} onChange={e=>setFormData({...formData, size: e.target.value})}>
+                        <option>$50k</option><option>$100k</option><option>$150k</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-white font-bold uppercase tracking-widest">{formData.phase === "evaluation" ? "Account Cost ($)" : "Activation Fee ($)"}</label>
+                      <input type="number" placeholder="0.00" className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-4 text-sm text-white font-bold outline-none focus:border-glow-green" value={formData.cost} onChange={e=>setFormData({...formData, cost: e.target.value})}/>
+                    </div>
+                  </div>
+                </div>
+
+                <button onClick={() => setStep(2)} className="w-full bg-glow-green hover:bg-white text-black font-bold py-3 rounded-lg uppercase tracking-widest text-xs mt-4 transition-all">Continue</button>
+              </div>
+            ) : (
+              <div className="p-6 space-y-6">
+                <h4 className="text-sm font-bold text-white uppercase tracking-wider">Protocol Configuration</h4>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-white font-bold uppercase tracking-widest">Min Winning Days</label>
+                    <div className="flex items-center gap-3">
+                      <button className="stepper-btn" onClick={() => setFormData({...formData, minTradingDays: Math.max(0, formData.minTradingDays - 1)})}><Minus size={14} className="text-glow-green"/></button>
+                      <span className="font-data text-white font-bold">{formData.minTradingDays}</span>
+                      <button className="stepper-btn" onClick={() => setFormData({...formData, minTradingDays: formData.minTradingDays + 1})}><Plus size={14} className="text-glow-green"/></button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-white font-bold uppercase tracking-widest">Min Win Day Delta ($)</label>
+                    <div className="flex items-center gap-3">
+                      <button className="stepper-btn" onClick={() => setFormData({...formData, minWinReq: Math.max(0, formData.minWinReq - 50)})}><Minus size={14} className="text-glow-green"/></button>
+                      <span className="font-data text-white font-bold text-[10px]">{fmt0(formData.minWinReq)}</span>
+                      <button className="stepper-btn" onClick={() => setFormData({...formData, minWinReq: formData.minWinReq + 50})}><Plus size={14} className="text-glow-green"/></button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-white font-bold uppercase tracking-widest">Profit Target ($)</label>
+                    <div className="flex items-center gap-3">
+                      <button className="stepper-btn" onClick={() => setFormData({...formData, profitTarget: Math.max(0, formData.profitTarget - 500)})}><Minus size={14} className="text-glow-green"/></button>
+                      <span className="font-data text-white font-bold text-[10px]">{fmt0(formData.profitTarget)}</span>
+                      <button className="stepper-btn" onClick={() => setFormData({...formData, profitTarget: formData.profitTarget + 500})}><Plus size={14} className="text-glow-green"/></button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-white font-bold uppercase tracking-widest">Consistency (%)</label>
+                    <div className="flex items-center gap-3">
+                      <button className="stepper-btn" onClick={() => setFormData({...formData, consistencyRule: Math.max(0, formData.consistencyRule - 5)})}><Minus size={14} className="text-glow-green"/></button>
+                      <span className="font-data text-white font-bold text-[10px]">{formData.consistencyRule}%</span>
+                      <button className="stepper-btn" onClick={() => setFormData({...formData, consistencyRule: Math.min(100, formData.consistencyRule + 5)})}><Plus size={14} className="text-glow-green"/></button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] text-white font-bold uppercase tracking-widest">Max Loss Limit ($)</label>
+                  <div className="flex items-center gap-3">
+                    <button className="stepper-btn" onClick={() => setFormData({...formData, maxTotalLoss: Math.max(0, formData.maxTotalLoss - 250)})}><Minus size={14} className="text-glow-green"/></button>
+                    <span className="font-data text-white font-bold text-[10px]">{fmt0(formData.maxTotalLoss)}</span>
+                    <button className="stepper-btn" onClick={() => setFormData({...formData, maxTotalLoss: formData.maxTotalLoss + 250})}><Plus size={14} className="text-glow-green"/></button>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <button onClick={() => setStep(1)} className="p-3 rounded-lg bg-zinc-900 text-white border border-zinc-800 transition-colors"><ArrowLeft size={18}/></button>
+                  <button onClick={handleAdd} className="flex-1 bg-glow-green hover:bg-white text-black font-bold py-3 rounded-lg uppercase tracking-widest text-xs transition-all">
+                    {editAccount && editAccount.id ? "Update Connection" : "Finalize Connection"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    /* ===========================
+       ========== ACCOUNTCARD
+       =========================== */
+    const AccountCard = ({ account, onDelete, onUpdate, onEdit, onDuplicate, setPhaseTab, isSelected, onToggleSelection, lockers }) => {
+      const rules = account.rules || {};
+      const decision = calculateDecision(account);
+      const [logPnl, setLogPnl] = useState("");
+      const [isEditingBalance, setIsEditingBalance] = useState(false);
+      const [editBal, setEditBal] = useState(account.currentBalance);
+
+      const [showPayoutForm, setShowPayoutForm] = useState(false);
+      const [showUpgradeForm, setShowUpgradeForm] = useState(false);
+      const [payoutAmt, setPayoutAmt] = useState("");
+      const [newMinBal, setNewMinBal] = useState("");
+      const [activationFee, setActivationFee] = useState("");
+      const [newMinWins, setNewMinWins] = useState(rules.minWinningDays || 5);
+      const [newMinWinReq, setNewMinWinReq] = useState(rules.minWinReq || 100);
+      const [newProfitTarget, setNewProfitTarget] = useState(account.profitGoal || 3000);
+      const [newConsistencyRule, setNewConsistencyRule] = useState(rules.consistencyRule || 20);
+      const [destinationLockerId, setDestinationLockerId] = useState("");
+
+      const fundedLockers = useMemo(() => lockers, [lockers]);
+
+      useEffect(() => {
+        if (fundedLockers.length > 0 && !destinationLockerId) {
+          setDestinationLockerId(fundedLockers[0].id);
+        }
+      }, [fundedLockers]);
+
+      const handleSaveBalance = () => {
+        const next = Number(editBal);
+        const maxEquity = Math.max(account.maxEquity || next, next);
+        onUpdate(account.id, { ...account, currentBalance: next, maxEquity });
+        setIsEditingBalance(false);
+      };
+
+      const handleAddLog = () => {
+        if(!logPnl) return;
+        const pnl = Number(logPnl);
+        const nextBal = account.currentBalance + pnl;
+        const qualifiesAsWin = pnl >= (rules.minWinReq || 100);
+        onUpdate(account.id, {
+          ...account,
+          currentBalance: nextBal,
+          maxEquity: Math.max(account.maxEquity || nextBal, nextBal),
+          dailyLogs: [{ date: yyyyMmDd(), pnl }, ...(account.dailyLogs||[])],
+          winningDays: (account.winningDays||0) + (qualifiesAsWin ? 1 : 0)
+        });
+        setLogPnl(""); setEditBal(nextBal);
+      };
+
+      const handleUpgradeSubmit = () => {
+        if (!destinationLockerId) return;
+        onUpdate(account.id, {
+          ...account, phase: "funded", currentBalance: account.startBalance, winningDays: 0, dailyLogs: [], cost: account.cost + (Number(activationFee) || 0),
+          lockerId: Number(destinationLockerId),
+          rules: {
+            ...account.rules,
+            minWinningDays: newMinWins,
+            minWinReq: newMinWinReq,
+            payoutThresholdProfit: newProfitTarget,
+            consistencyRule: newConsistencyRule
+          },
+          profitGoal: newProfitTarget
+        });
+        setShowUpgradeForm(false);
+        if(setPhaseTab) setPhaseTab("funded");
+      };
+
+      const handlePayoutSubmit = () => {
+        if(!payoutAmt) return;
+        const amt = Number(payoutAmt);
+        const nextBal = account.currentBalance - amt;
+        onUpdate(account.id, {
+          ...account,
+          currentBalance: nextBal,
+          activity: [...(account.activity || []), { type: "payout", amount: amt, ts: nowISO() }],
+          winningDays: 0,
+          drawdownFloor: newMinBal ? Number(newMinBal) : account.drawdownFloor
+        });
+        setShowPayoutForm(false); setPayoutAmt(""); setNewMinBal(""); setEditBal(nextBal);
+      };
+
+      return (
+        <div className={`secure-module p-6 animate-fade-in border-zinc-800 ${isSelected ? 'ring-2 ring-[#6DFFC6]' : ''}`}>
+          <div className="relative z-10 flex flex-col h-full justify-between">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex gap-3 items-center">
+                <div className={`account-checkbox ${isSelected ? 'checked' : ''}`} onClick={() => onToggleSelection(account.id)}>
+                  {isSelected && <Check size={12} strokeWidth={4} />}
+                </div>
+                <div>
+                  <h3 className="text-white font-bold font-logo text-sm tracking-[0.1em] uppercase leading-none">{account.name}</h3>
+                  <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-[0.2em] mt-1">{account.firm} // <span className={decision.color === "red" ? "text-red-500" : "text-glow-green"}>{decision.status}</span></div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => onEdit(account)} className="p-1.5 bg-zinc-800/80 rounded hover:text-glow-green transition-colors"><Edit2 size={14}/></button>
+                <button onClick={() => onDuplicate(account)} className="p-1.5 bg-zinc-800/80 rounded hover:text-blue-400 transition-colors"><Copy size={14}/></button>
+                <button onClick={() => onDelete(account.id)} className="p-1.5 bg-zinc-800/80 rounded hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
+              </div>
+            </div>
+
+            <div className="text-center mb-2">
+              <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.1em] mb-1">Current Balance</div>
+              {isEditingBalance ? (
+                <div className="flex items-center justify-center gap-2">
+                  <input type="number" value={editBal} onChange={(e)=>setEditBal(e.target.value)} className="bg-black/50 text-white font-data text-3xl w-40 text-center border-b border-glow-green outline-none" autoFocus />
+                  <button onClick={handleSaveBalance} className="text-glow-green"><Save size={18}/></button>
+                </div>
+              ) : (
+                <div onClick={()=>setIsEditingBalance(true)} className={`text-4xl font-extrabold font-data cursor-pointer transition-colors select-none mb-1 leading-none tracking-tight ${decision.status === 'BREACHED' ? 'text-red-500' : 'text-white hover:text-glow-green'}`}>{fmt0(account.currentBalance)}</div>
+              )}
+              <div className={`text-sm font-bold font-data ${decision.profit >= 0 ? "text-glow-green" : "text-red-500"}`}>{decision.profit >= 0 ? "+" : ""}{fmt0(decision.profit)}</div>
+            </div>
+
+            <div className="space-y-3 mb-4">
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[8px] text-zinc-500 font-bold uppercase tracking-[0.15em]">Profit Goal</span>
+                    {decision.profit > 0 && decision.isConsistencyBreached && <span className="text-[7px] bg-red-500/20 text-red-400 px-1 rounded font-bold uppercase">Adj.</span>}
+                  </div>
+                  <span className="text-[8px] text-zinc-400 font-data tracking-widest">{fmt0(Math.max(0, decision.profit))} / {fmt0(decision.thresholdAmount)}</span>
+                </div>
+                <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                  <div className={`h-full transition-all duration-1000 ${decision.isConsistencyBreached ? 'bg-orange-400' : 'bg-glow-green'}`} style={{width: `${decision.progress}%`}}></div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[8px] text-red-500/80 font-bold uppercase tracking-[0.15em]">Drawdown</span>
+                  <span className="text-[8px] text-zinc-400 font-data tracking-widest">Floor: {fmt0(decision.ddLine)}</span>
+                </div>
+                <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                  <div className={`h-full transition-all duration-1000 ${decision.status === 'BREACHED' ? 'bg-red-600' : 'bg-red-500'}`} style={{width: `${Math.max(0, Math.min(100, (1 - (account.currentBalance - decision.ddLine) / (rules.drawdownLimit || 2000)) * 100))}%`}}></div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[8px] text-zinc-500 font-bold uppercase tracking-[0.15em]">Winning Days (Min ${fmt0(rules.minWinReq || 100)})</span>
+                  <span className="text-[8px] text-zinc-400 font-data tracking-widest">{account.winningDays || 0} / {rules.minWinningDays || 5}</span>
+                </div>
+                <div className="flex gap-1 h-1">
+                  {Array.from({length: (rules.minWinningDays || 5)}).map((_, i) => (
+                    <div key={i} className={`flex-1 rounded-full transition-all duration-500 ${i < (account.winningDays||0) ? 'bg-glow-green shadow-[0_0_8px_rgba(109,255,198,0.5)]' : 'bg-white/10'}`}></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <div className="flex-1">
+                {decision.canPayout && !showUpgradeForm && !showPayoutForm ? (
+                  account.phase === 'evaluation' ? (
+                    <button onClick={() => setShowUpgradeForm(true)} className="w-full bg-glow-green/20 border border-glow-green text-glow-green font-bold text-[9px] py-2 rounded hover:bg-glow-green hover:text-black transition-all uppercase tracking-widest">Move To Funded</button>
+                  ) : (
+                    <button onClick={() => setShowPayoutForm(true)} className="w-full bg-glow-green/20 border border-glow-green text-glow-green font-bold text-[9px] py-2 rounded hover:bg-glow-green hover:text-black transition-all uppercase tracking-widest">Payout</button>
+                  )
+                ) : (
+                  <div className="flex gap-1">
+                    <input type="text" placeholder="+/-" value={logPnl} onChange={e=>setLogPnl(e.target.value)} className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-[10px] text-white font-data flex-1 outline-none focus:border-glow-green"/>
+                    <button onClick={handleAddLog} className="bg-zinc-800 hover:bg-white hover:text-black text-zinc-400 px-3 rounded text-[9px] font-black uppercase tracking-widest transition-all">LOG</button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {(showUpgradeForm || showPayoutForm) && (
+              <div className="absolute inset-0 bg-[#09090b] z-20 flex flex-col justify-center p-4 animate-fade-in">
+                {showUpgradeForm && (
+                  <div className="space-y-3">
+                    <div className="flex justify-between border-b border-zinc-800 pb-2"><span className="text-xs font-bold text-white uppercase">Funded Setup</span><button onClick={()=>setShowUpgradeForm(false)}><XIcon size={14} className="text-zinc-500"/></button></div>
+                    <select className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-[10px] text-white font-bold" value={destinationLockerId} onChange={e=>setDestinationLockerId(e.target.value)}>
+                      <option value="">Select Destination Locker...</option>
+                      {fundedLockers.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                    </select>
+                    <input type="number" placeholder="Fee ($)" className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-[10px] text-white" value={activationFee} onChange={e=>setActivationFee(e.target.value)} />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="number" className="bg-zinc-900 border border-zinc-800 rounded p-2 text-[10px] text-white" value={newMinWins} onChange={e=>setNewMinWins(e.target.value)} title="Min Wins"/>
+                      <input type="number" className="bg-zinc-900 border border-zinc-800 rounded p-2 text-[10px] text-white" value={newMinWinReq} onChange={e=>setNewMinWinReq(e.target.value)} title="Min Win $"/>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1"><label className="text-[9px] text-zinc-500 uppercase font-bold">Payout Target ($)</label><input type="number" className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white outline-none focus:border-glow-green font-bold" value={newProfitTarget} onChange={e=>setNewProfitTarget(Number(e.target.value))} /></div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] text-zinc-500 uppercase font-bold block mb-1">Consistency (%)</label>
+                        <div className="flex items-center gap-2">
+                          <button className="stepper-btn" onClick={() => setNewConsistencyRule(Math.max(0, newConsistencyRule - 5))}><Minus size={12} className="text-glow-green"/></button>
+                          <span className="font-data text-white font-bold text-xs">{newConsistencyRule}%</span>
+                          <button className="stepper-btn" onClick={() => setNewConsistencyRule(Math.min(100, newConsistencyRule + 5))}><Plus size={12} className="text-glow-green"/></button>
+                        </div>
+                      </div>
+                    </div>
+                    <button onClick={handleUpgradeSubmit} disabled={!destinationLockerId} className="w-full bg-glow-green text-black font-bold text-[10px] py-2 rounded uppercase">Confirm</button>
+                  </div>
+                )}
+
+                {showPayoutForm && (
+                  <div className="space-y-3">
+                    <div className="flex justify-between border-b border-zinc-800 pb-2"><span className="text-xs font-bold text-white uppercase">Withdrawal</span><button onClick={()=>setShowPayoutForm(false)}><XIcon size={14} className="text-zinc-500"/></button></div>
+                    <input type="number" placeholder="Amount ($)" className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-[10px] text-white" value={payoutAmt} onChange={e=>setPayoutAmt(e.target.value)} />
+                    <input type="number" placeholder="New Floor ($)" className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-[10px] text-white" value={newMinBal} onChange={e=>setNewMinBal(e.target.value)} />
+                    <button onClick={handlePayoutSubmit} className="w-full bg-glow-green text-black font-bold text-[10px] py-2 rounded uppercase">Confirm</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    /* ===========================
+       ========== MAIN SUITE
+       =========================== */
+    const LockerSuite = ({ onLogout, onSessionExpired }) => {
+      const [activeTab, setActiveTab] = useState("locker");
+      const [phaseTab, setPhaseTab] = useState("evaluation");
+      const [currentLockerId, setCurrentLockerId] = useState(null);
+      const [pnlTimeframe, setPnlTimeframe] = useState("ALL");
+
+      const [folders, setFolders] = useState(() => { try { return JSON.parse(localStorage.getItem(LOCKER_STORAGE_KEY)) || []; } catch { return []; } });
+      const [accounts, setAccounts] = useState(() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; } });
+
+      const [selectedAccountIds, setSelectedAccountIds] = useState([]);
+      const [bulkPnl, setBulkPnl] = useState("");
+
+      const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+      const [isLockerModalOpen, setIsLockerModalOpen] = useState(false);
+      const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+      const [editingAccount, setEditingAccount] = useState(null);
+      const [editingLocker, setEditingLocker] = useState(null);
+
+      // Freemium State
+      const [isPro, setIsPro] = useState(false);
+
+      const menuRef = useRef(null);
+
+      // Tools State
+      const [calcProfit, setCalcProfit] = useState(3000);
+      const [calcCons, setCalcCons] = useState(40);
+      const [riskRisk, setRiskRisk] = useState(500);
+      const [riskStop, setRiskStop] = useState(20);
+
+      useEffect(() => {
+        (async () => {
+          try {
+            const ent = await getJSON("/get-entitlement");
+            setIsPro(!!ent?.hasActiveSubscription);
+          } catch {
+            setIsPro(false);
+          }
+
+          if (localStorage.getItem('prop_locker_token')) {
+            try {
+              const data = await getJSON("/app-sync");
+              if (data) {
+                setFolders(data.lockers_json || []);
+                setAccounts(data.accounts_json || []);
+              }
+            } catch (e) { console.error("Data load failed", e); }
+          }
+        })();
+      }, []);
+
+      useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+        localStorage.setItem(LOCKER_STORAGE_KEY, JSON.stringify(folders));
+
+        if (localStorage.getItem('prop_locker_token')) {
+          const handler = setTimeout(() => {
+            postJSON("/app-sync", { lockers: folders, accounts: accounts }).catch(e => console.error("Sync fail", e));
+          }, 1000);
+          return () => clearTimeout(handler);
+        }
+      }, [accounts, folders]);
+
+      const handleAddLocker = (l) => {
+        if(editingLocker) setFolders(folders.map(x => x.id === l.id ? l : x));
+        else setFolders([...folders, l]);
+        setEditingLocker(null);
+      };
+
+      const deleteLocker = (id) => {
+        setFolders(folders.filter(f => f.id !== id));
+        setAccounts(accounts.filter(a => a.lockerId !== id));
+      };
+
+      const updateAccount = (id, u) => setAccounts(accounts.map(a => a.id === id ? u : a));
+      const deleteAccount = (id) => setAccounts(accounts.filter(a => a.id !== id));
+
+      const handleAddAccount = (acc) => {
+        const exists = accounts.some(a => a.id === acc.id);
+        if (exists) setAccounts(accounts.map(a => a.id === acc.id ? acc : a));
+        else setAccounts([acc, ...accounts]);
+        setEditingAccount(null);
+        setIsAccountModalOpen(false);
+      };
+
+      const handleDuplicate = (acc) => {
+        const baseName = acc.name.replace(/\s\(\d+\)$/, "");
+        let maxNum = 1;
+        accounts.forEach(a => {
+          const nameMatch = a.name.match(new RegExp(`^${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s\\((\\d+)\\))?$`));
+          if (nameMatch) {
+            const num = nameMatch[1] ? parseInt(nameMatch[1]) : 1;
+            if (num > maxNum) maxNum = num;
+          }
+        });
+        const clone = { ...acc, id: Date.now(), name: `${baseName} (${maxNum + 1})`, currentBalance: acc.startBalance, dailyLogs: [], activity: [], winningDays: 0 };
+        setAccounts([clone, ...accounts]);
+      };
+
+      const toggleSelection = (id) => setSelectedAccountIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+
+      const handleBulkLog = () => {
+        if (!bulkPnl) return;
+        const pnl = Number(bulkPnl);
+        const updatedAccounts = accounts.map(acc => {
+          if (selectedAccountIds.includes(acc.id)) {
+            const nextBal = acc.currentBalance + pnl;
+            const rules = acc.rules || {};
+            const qualifiesAsWin = pnl >= (rules.minWinReq || 100);
+            return {
+              ...acc,
+              currentBalance: nextBal,
+              maxEquity: Math.max(acc.maxEquity || nextBal, nextBal),
+              dailyLogs: [{ date: yyyyMmDd(), pnl }, ...(acc.dailyLogs || [])],
+              winningDays: (acc.winningDays || 0) + (qualifiesAsWin ? 1 : 0)
+            };
+          }
+          return acc;
+        });
+        setAccounts(updatedAccounts);
+        setBulkPnl("");
+        setSelectedAccountIds([]);
+      };
+
+      const allLockers = folders;
+
+      const displayedAccounts = useMemo(() => {
+        if (!currentLockerId) return [];
+        return accounts.filter(acc => acc.lockerId === currentLockerId && (acc.phase || "evaluation") === phaseTab);
+      }, [accounts, currentLockerId, phaseTab]);
+
+      const globalPhaseAccounts = useMemo(() => accounts.filter(acc => (acc.phase || "evaluation") === phaseTab), [accounts, phaseTab]);
+      const globalPhaseStats = useMemo(() => {
+        const totalFunding = globalPhaseAccounts.reduce((sum, a) => sum + a.startBalance, 0);
+        return { totalFunding };
+      }, [globalPhaseAccounts]);
+
+      const currentLockerStats = useMemo(() => {
+        const totalFunding = displayedAccounts.reduce((sum, a) => sum + a.startBalance, 0);
+        return { totalFunding };
+      }, [displayedAccounts]);
+
+      const calculatePnl = (accs, timeframe) => {
+        let pnl = 0;
+        const now = new Date();
+        const todayStr = yyyyMmDd(now);
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+        accs.forEach(acc => {
+          if (timeframe === "ALL") {
+            pnl += (acc.currentBalance - acc.startBalance);
+          } else {
+            (acc.dailyLogs || []).forEach(log => {
+              const logDate = new Date(log.date);
+              if (timeframe === "DAILY" && log.date === todayStr) pnl += Number(log.pnl);
+              else if (timeframe === "WEEKLY" && logDate >= oneWeekAgo) pnl += Number(log.pnl);
+              else if (timeframe === "MONTHLY" && logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear) pnl += Number(log.pnl);
+            });
+          }
+        });
+        return pnl;
+      };
+
+      const globalPnlStats = useMemo(() => ({
+        eval: calculatePnl(accounts.filter(a => (a.phase||'evaluation') === 'evaluation'), pnlTimeframe),
+        funded: calculatePnl(accounts.filter(a => a.phase === 'funded'), pnlTimeframe)
+      }), [accounts, pnlTimeframe]);
+
+      const currentLockerPnlStats = useMemo(() => {
+        if (!currentLockerId) return { eval: 0, funded: 0 };
+        const lockerAccs = accounts.filter(a => a.lockerId === currentLockerId);
+        return {
+          eval: calculatePnl(lockerAccs.filter(a => (a.phase||'evaluation') === 'evaluation'), pnlTimeframe),
+          funded: calculatePnl(lockerAccs.filter(a => a.phase === 'funded'), pnlTimeframe)
+        };
+      }, [accounts, currentLockerId, pnlTimeframe]);
+
+      const globalStats = useMemo(() => {
+        const totalPayouts = accounts.reduce((sum, a) => sum + (a.activity || []).filter(act => act.type === 'payout').reduce((p, c) => p + Number(c.amount), 0), 0);
+        const totalCost = accounts.reduce((sum, a) => sum + (Number(a.cost) || 0), 0);
+        return { totalPayouts, totalCost, roi: totalPayouts - totalCost };
+      }, [accounts]);
+
+      const getLockerSummary = (lockerId) => {
+        const accs = accounts.filter(a => a.lockerId === lockerId);
+
+        const evals = accs.filter(a => (a.phase || 'evaluation') === 'evaluation');
+        const fundeds = accs.filter(a => a.phase === 'funded');
+
+        return {
+          evalCount: evals.length,
+          evalFunding: evals.reduce((s,a) => s + a.startBalance, 0),
+          fundedCount: fundeds.length,
+          fundedFunding: fundeds.reduce((s,a) => s + a.startBalance, 0),
+          totalProfit: accs.reduce((s, a) => s + (a.currentBalance - a.startBalance), 0)
+        };
+      };
+
+      const handleUpgrade = async () => {
+        try {
+          const token = localStorage.getItem("prop_locker_token");
+          const tokenType = typeof token;
+          const tokenLength = token ? token.length : 0;
+          const tokenPartsCount = token ? token.split(".").length : 0;
+          const tokenPreview = token && token.length > 24
+            ? `${token.slice(0, 12)}...${token.slice(-12)}`
+            : token || "";
+          const willSetAuthHeader = Boolean(token);
+
+          console.debug("[checkout] token type/length", { type: tokenType, length: tokenLength });
+          console.debug("[checkout] token parts", tokenPartsCount);
+          console.debug("[checkout] token masked", tokenPreview);
+          console.debug("[checkout] authorization header set", willSetAuthHeader);
+
+          if (!token || tokenPartsCount !== 3) {
+            onSessionExpired();
+            return;
+          }
+
+          const response = await fetch(`${NETLIFY_FN_BASE}/create-checkout-session`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({})
+          });
+
+          const responseText = await response.text();
+
+          if (response.status === 401) {
+            localStorage.removeItem("prop_locker_token");
+            localStorage.removeItem("prop_locker_auth");
+            localStorage.removeItem("prop_locker_current_user");
+            alert("Session expired. Please log in again.");
+            onSessionExpired();
+            return;
+          }
+
+          if (!response.ok) {
+            console.error("Checkout session request failed", {
+              status: response.status,
+              body: responseText
+            });
+            alert("Unable to start checkout right now. Please try again.");
+            return;
+          }
+
+          const data = responseText ? JSON.parse(responseText) : {};
+          if (data?.url) window.location.href = data.url;
+          else alert("Checkout session did not return a URL.");
+        } catch (e) {
+          alert("Unable to start checkout right now. Please try again.");
+        }
+      };
+
+      return (
+        <div className="min-h-screen p-4 md:p-8 max-w-[1800px] mx-auto flex flex-col animate-enter relative">
+          {!isPro && (
+            <div className="absolute top-0 left-0 w-full bg-gradient-to-r from-indigo-900 to-black text-white text-[10px] font-bold uppercase tracking-widest text-center py-2 z-[60] flex justify-center items-center gap-4">
+              <span>Free Plan — Sync Disabled</span>
+              <button onClick={handleUpgrade} className="bg-white text-black px-2 py-0.5 rounded text-[9px] hover:bg-glow-green transition-colors">UPGRADE TO PRO</button>
+            </div>
+          )}
+
+          <div className="flex justify-between items-center mb-12 relative z-50 pt-6">
+            <LogoMark />
+            <div className="relative" ref={menuRef}>
+              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 text-zinc-400 hover:text-white transition-colors">{isMenuOpen ? <XIcon size={20} /> : <MenuIcon size={20} />}</button>
+              {isMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 glass-panel rounded-lg overflow-hidden animate-fade-in flex flex-col shadow-2xl border border-zinc-800">
+                  {/* FIX: removed setView('suite') calls (was crashing) */}
+                  <button onClick={() => {setActiveTab("locker"); setIsMenuOpen(false); setCurrentLockerId(null);}} className={`px-4 py-3 text-xs text-left hover:bg-white/5 uppercase font-bold tracking-widest ${activeTab === "locker" ? "text-glow-green" : "text-zinc-400"}`}>Locker</button>
+                  <button onClick={() => {setActiveTab("expenses"); setIsMenuOpen(false);}} className={`px-4 py-3 text-xs text-left hover:bg-white/5 uppercase font-bold tracking-widest ${activeTab === "expenses" ? "text-glow-green" : "text-zinc-400"}`}>Expenses</button>
+                  <button onClick={() => {setActiveTab("tools"); setIsMenuOpen(false);}} className={`px-4 py-3 text-xs text-left hover:bg-white/5 uppercase font-bold tracking-widest ${activeTab === "tools" ? "text-glow-green" : "text-zinc-400"}`}>Tools</button>
+                  <button onClick={onLogout} className="px-4 py-3 text-xs text-left text-red-400 border-t border-zinc-800 hover:bg-red-400/10 uppercase font-bold tracking-widest">Logout</button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {activeTab === "locker" && (
+            <div className="animate-enter w-full space-y-4 mx-auto">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-zinc-800 gap-4 pb-4">
+                {!currentLockerId ? (
+                  <div className="flex gap-8 items-center h-10">
+                    <span className="text-sm font-bold text-white uppercase tracking-widest">My Lockers <span className="text-[10px] ml-1 opacity-60 font-data">{allLockers.length}</span></span>
+                  </div>
+                ) : (
+                  <div className="flex gap-8 items-end">
+                    <div className="flex items-center gap-4 pb-1">
+                      <button onClick={() => setCurrentLockerId(null)} className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-colors"><ArrowLeft size={16} /> Back</button>
+                      <div className="h-4 w-[1px] bg-zinc-800"></div>
+                      <div className="flex flex-col">
+                        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">{folders.find(f => f.id === currentLockerId)?.firm}</span>
+                        <span className="text-xl font-black font-logo text-white uppercase tracking-widest leading-none">{folders.find(f => f.id === currentLockerId)?.name}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-6 ml-8">
+                      <button onClick={() => setPhaseTab('evaluation')} className={`pb-1 text-xs font-bold uppercase tracking-widest relative transition-all ${phaseTab === 'evaluation' ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}>Evaluation {phaseTab === 'evaluation' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-glow-green shadow-[0_0_10px_#6DFFC6]"></div>}</button>
+                      <button onClick={() => setPhaseTab('funded')} className={`pb-1 text-xs font-bold uppercase tracking-widest relative transition-all ${phaseTab === 'funded' ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}>Funded {phaseTab === 'funded' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-glow-green shadow-[0_0_10px_#6DFFC6]"></div>}</button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-3">
+                  {!currentLockerId ? (
+                    <button onClick={() => {setEditingLocker(null); setIsLockerModalOpen(true);}} className="bg-glow-green hover:bg-white text-black px-5 py-2 rounded font-bold text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(109,255,198,0.3)]"><FolderIcon size={14}/> Create Locker</button>
+                  ) : (
+                    <>
+                      {selectedAccountIds.length > 0 && <button onClick={() => setSelectedAccountIds([])} className="text-[9px] text-zinc-500 font-bold uppercase hover:text-white transition-colors">Deselect All</button>}
+                      <button onClick={() => {setEditingAccount({lockerId: currentLockerId, phase: phaseTab}); setIsAccountModalOpen(true);}} className="bg-glow-green hover:bg-white text-black px-5 py-2 rounded font-bold text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(109,255,198,0.3)]"><Plus size={14}/> New Account</button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {!currentLockerId ? (
+                <div className="animate-fade-in space-y-8">
+                  <div className="bg-white/5 rounded-xl border border-white/5 p-4 flex flex-col md:flex-row justify-between items-center gap-6 mb-6">
+                    <div className="flex gap-12">
+                      <div>
+                        <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Total Funding (Active Tab)</div>
+                        <div className="text-xl font-bold font-data text-white">{fmt0(globalPhaseStats.totalFunding)}</div>
+                      </div>
+                      <div className="w-px h-10 bg-white/10 hidden md:block"></div>
+                      <div>
+                        <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Eval PNL</div>
+                        <div className={`text-xl font-bold font-data ${globalPnlStats.eval >= 0 ? 'text-glow-green' : 'text-red-500'}`}>
+                          {globalPnlStats.eval >= 0 ? "+" : ""}{fmt0(globalPnlStats.eval)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Live PNL</div>
+                        <div className={`text-xl font-bold font-data ${globalPnlStats.funded >= 0 ? 'text-glow-green' : 'text-red-500'}`}>
+                          {globalPnlStats.funded >= 0 ? "+" : ""}{fmt0(globalPnlStats.funded)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex bg-black/40 p-1 rounded-lg border border-white/5">
+                      {["DAILY", "WEEKLY", "MONTHLY", "ALL"].map(t => (
+                        <button
+                          key={t}
+                          onClick={() => setPnlTimeframe(t)}
+                          className={`pnl-toggle-btn ${pnlTimeframe === t ? 'active' : ''}`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
+                    {allLockers.length === 0 && (
+                      <div className="col-span-full py-12 text-center border border-dashed border-zinc-800 rounded-xl">
+                        <p className="text-zinc-500 text-xs uppercase tracking-widest font-bold">No Lockers Created. Create one to start.</p>
+                      </div>
+                    )}
+                    {allLockers.map(locker => {
+                      const summary = getLockerSummary(locker.id);
+                      return (
+                        <div key={locker.id} onClick={() => setCurrentLockerId(locker.id)} className="locker-card group bg-black/40 backdrop-blur-md relative p-6 flex flex-col h-64">
+                          <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                            <button onClick={(e) => {e.stopPropagation(); setEditingLocker(locker); setIsLockerModalOpen(true);}} className="hover:text-white text-zinc-500 bg-black/80 p-1.5 rounded border border-zinc-800"><Edit2 size={12}/></button>
+                            <button onClick={(e) => {e.stopPropagation(); deleteLocker(locker.id);}} className="hover:text-red-500 text-zinc-500 bg-black/80 p-1.5 rounded border border-zinc-800"><Trash2 size={12}/></button>
+                          </div>
+
+                          <div className="flex-1 flex flex-col items-center justify-center text-center z-10 mt-2">
+                            <h3 className="text-3xl font-black text-white font-logo uppercase tracking-widest leading-none mb-3">{locker.name}</h3>
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em]">{locker.firm}</span>
+                          </div>
+
+                          <div className="w-full h-px bg-zinc-800/50 my-4"></div>
+
+                          <div className="flex justify-between items-end w-full relative z-10">
+                            <div className="flex flex-col items-start gap-1">
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-sm font-bold text-white font-data">{summary.evalCount}</span>
+                                <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-wider">Evaluations</span>
+                              </div>
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-sm font-bold text-white font-data">{summary.fundedCount}</span>
+                                <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-wider">Funded</span>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end">
+                              <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Net P&L</span>
+                              <span className={`text-2xl font-bold font-data ${summary.totalProfit >= 0 ? 'text-glow-green' : 'text-red-500'}`}>
+                                {summary.totalProfit >= 0 ? "+" : ""}{fmt0(summary.totalProfit)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-8 animate-fade-in">
+                  <div className="bg-white/5 rounded-xl border border-white/5 p-4 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="flex gap-12">
+                      <div><div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Total Funding (Active Tab)</div><div className="text-xl font-bold font-data text-white">{fmt0(currentLockerStats.totalFunding)}</div></div>
+                      <div className="w-px h-10 bg-white/10 hidden md:block"></div>
+                      <div><div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Eval PNL</div><div className={`text-xl font-bold font-data ${currentLockerPnlStats.eval >= 0 ? 'text-glow-green' : 'text-red-500'}`}>{currentLockerPnlStats.eval >= 0 ? "+" : ""}{fmt0(currentLockerPnlStats.eval)}</div></div>
+                      <div><div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Live PNL</div><div className={`text-xl font-bold font-data ${currentLockerPnlStats.funded >= 0 ? 'text-glow-green' : 'text-red-500'}`}>{currentLockerPnlStats.funded >= 0 ? "+" : ""}{fmt0(currentLockerPnlStats.funded)}</div></div>
+                    </div>
+                    <div className="flex bg-black/40 p-1 rounded-lg border border-white/5">{["DAILY", "WEEKLY", "MONTHLY", "ALL"].map(t => (<button key={t} onClick={() => setPnlTimeframe(t)} className={`pnl-toggle-btn ${pnlTimeframe === t ? 'active' : ''}`}>{t}</button>))}</div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {displayedAccounts.map(acc => (
+                      <AccountCard
+                        key={acc.id} account={acc} onDelete={deleteAccount} onUpdate={(id,u)=>updateAccount(id,u)}
+                        onEdit={(a) => {setEditingAccount(a); setIsAccountModalOpen(true);}}
+                        onDuplicate={handleDuplicate} setPhaseTab={setPhaseTab}
+                        isSelected={selectedAccountIds.includes(acc.id)} onToggleSelection={toggleSelection}
+                        lockers={folders}
+                      />
+                    ))}
+                    {displayedAccounts.length === 0 && (
+                      <div className="col-span-full py-12 text-center text-zinc-600 text-xs font-bold uppercase tracking-widest border border-dashed border-zinc-800 rounded-xl">
+                        No {phaseTab} Accounts in this Locker
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedAccountIds.length > 1 && (
+                    <div className="bulk-entry-bar border-green-accent">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-glow-green/10 rounded-full flex items-center justify-center text-glow-green"><Layers size={20}/></div>
+                        <div><div className="text-xs font-bold text-white uppercase tracking-widest">Bulk Entry</div><div className="text-[9px] text-zinc-500 font-bold uppercase">{selectedAccountIds.length} Nodes Selected</div></div>
+                      </div>
+                      <div className="flex gap-2 flex-1 max-w-xs">
+                        <input type="text" placeholder="DELTA (+/-)" value={bulkPnl} onChange={e => setBulkPnl(e.target.value)} className="bg-black/60 border border-zinc-800 rounded-lg px-4 py-2 text-xs text-white font-data flex-1 outline-none focus:border-glow-green"/>
+                        <button onClick={handleBulkLog} className="bg-glow-green hover:bg-white text-black px-6 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">LOG ALL</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'expenses' && (
+            <div className="animate-enter max-w-5xl mx-auto w-full space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="glass-panel p-8 rounded-xl"><div className="text-[10px] text-zinc-500 font-bold uppercase mb-2">Total Investment</div><div className="text-4xl font-bold font-data text-white">{fmt0(globalStats.totalCost)}</div></div>
+                <div className="glass-panel p-8 rounded-xl"><div className="text-[10px] text-zinc-500 font-bold uppercase mb-2">Total Payouts</div><div className="text-4xl font-bold font-data text-glow-green">{fmt0(globalStats.totalPayouts)}</div></div>
+                <div className="glass-panel p-8 rounded-xl"><div className="text-[10px] text-zinc-500 font-bold uppercase mb-2">Net ROI</div><div className={`text-4xl font-bold font-data ${globalStats.roi >= 0 ? 'text-glow-green' : 'text-red-500'}`}>{fmt0(globalStats.roi)}</div></div>
+              </div>
+              <div className="glass-panel rounded-xl overflow-hidden border border-zinc-800">
+                <div className="p-4 border-b border-zinc-800 bg-zinc-900/20 flex items-center gap-2"><Calendar size={14} className="text-zinc-500"/><span className="text-xs font-bold text-white uppercase tracking-widest">Expense Ledger</span></div>
+                <div className="overflow-x-auto">
+                  <table className="w-full expense-table">
+                    <thead><tr><th>Account</th><th>Start Date</th><th>Size</th><th>Cost</th><th>Current Bal</th><th>Payouts</th><th>Return</th></tr></thead>
+                    <tbody>
+                      {accounts.map(acc => {
+                        const payouts = (acc.activity||[]).filter(a=>a.type==='payout').reduce((s,c)=>s+Number(c.amount),0);
+                        return (
+                          <tr key={acc.id} className="text-zinc-400">
+                            <td>{acc.name}</td>
+                            <td>{acc.startDate}</td>
+                            <td className="font-data">{fmt0(acc.startBalance)}</td>
+                            <td className="text-red-500 font-data">-{fmt0(acc.cost || 0)}</td>
+                            <td className="text-white font-data">{fmt0(acc.currentBalance)}</td>
+                            <td className="text-glow-green font-data">{fmt0(payouts)}</td>
+                            <td className={`font-bold font-data ${payouts - (acc.cost||0) >= 0 ? 'text-glow-green' : 'text-red-500'}`}>{fmt0(payouts - (acc.cost||0))}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'tools' && (
+            <div className="animate-enter max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8">
+              {!isPro ? (
+                <div className="col-span-full h-96 flex flex-col items-center justify-center glass-panel rounded-2xl border-dashed border-zinc-800 text-center space-y-4">
+                  <div className="p-4 bg-glow-green/10 rounded-full text-glow-green"><LockIcon size={32}/></div>
+                  <div>
+                    <h3 className="text-white font-bold uppercase tracking-widest mb-2">Pro Tools Locked</h3>
+                    <p className="text-zinc-500 text-sm">Upgrade to Pro to access Risk Management & Consistency calculators.</p>
+                  </div>
+                  <button onClick={handleUpgrade} className="bg-glow-green text-black px-8 py-3 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-white transition-all">Unlock Pro Tools</button>
+                </div>
+              ) : (
+                <>
+                  <div className="glass-panel p-8 rounded-2xl space-y-6">
+                    <div className="flex items-center gap-2 mb-2"><PieChart size={18} className="text-glow-green"/><h3 className="text-white font-bold uppercase tracking-widest text-sm">Consistency Calculator</h3></div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-[10px] text-zinc-500 font-bold uppercase block mb-1">Total Profit Goal ($)</label>
+                        <input type="number" value={calcProfit} onChange={e=>setCalcProfit(e.target.value)} className="w-full bg-black/40 border border-zinc-800 rounded-lg px-4 py-2 text-white font-data outline-none focus:border-glow-green"/>
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-zinc-500 font-bold uppercase block mb-1">Consistency Rule (%)</label>
+                        <input type="number" value={calcCons} onChange={e=>setCalcCons(e.target.value)} className="w-full bg-black/40 border border-zinc-800 rounded-lg px-4 py-2 text-white font-data outline-none focus:border-glow-green"/>
+                      </div>
+                      <div className="bg-black/40 p-4 rounded-xl border border-white/5 space-y-2">
+                        <div className="flex justify-between items-end">
+                          <span className="text-xs text-zinc-500 font-bold uppercase">Max Single Day Limit</span>
+                          <span className="text-2xl font-bold font-data text-glow-green">{fmt0(calcProfit * (calcCons/100))}</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-glow-green transition-all" style={{width:`${calcCons}%`}}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="glass-panel p-8 rounded-2xl space-y-6">
+                    <div className="flex items-center gap-2 mb-2"><AlertCircle size={18} className="text-glow-green"/><h3 className="text-white font-bold uppercase tracking-widest text-sm">NASDAQ Risk Manager</h3></div>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[10px] text-zinc-500 font-bold uppercase block mb-1">Risk Amount ($)</label>
+                          <input type="number" value={riskRisk} onChange={e=>setRiskRisk(e.target.value)} className="w-full bg-black/40 border border-zinc-800 rounded-lg px-4 py-2 text-white font-data outline-none focus:border-glow-green"/>
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-zinc-500 font-bold uppercase block mb-1">Stop Loss (Pts)</label>
+                          <input type="number" value={riskStop} onChange={e=>setRiskStop(e.target.value)} className="w-full bg-black/40 border border-zinc-800 rounded-lg px-4 py-2 text-white font-data outline-none focus:border-glow-green"/>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-black/40 p-4 rounded-xl border border-white/5 text-center">
+                          <div className="text-[9px] text-zinc-500 font-bold uppercase mb-1">MNQ (Micros)</div>
+                          <div className="text-3xl font-bold text-white font-data">{(riskRisk / (riskStop * 2)).toFixed(1)}</div>
+                        </div>
+                        <div className="bg-black/40 p-4 rounded-xl border border-white/5 text-center">
+                          <div className="text-[9px] text-zinc-500 font-bold uppercase mb-1">NQ (Minis)</div>
+                          <div className="text-3xl font-bold text-white font-data">{(riskRisk / (riskStop * 20)).toFixed(2)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          <AddLockerModal
+            isOpen={isLockerModalOpen}
+            onClose={() => {setIsLockerModalOpen(false); setEditingLocker(null);}}
+            onAdd={handleAddLocker}
+            editLocker={editingLocker}
+          />
+          <AddAccountModal
+            isOpen={isAccountModalOpen}
+            onClose={() => {setIsAccountModalOpen(false); setEditingAccount(null);}}
+            onAdd={handleAddAccount}
+            editAccount={editingAccount}
+            lockers={folders}
+            currentLockerId={currentLockerId}
+          />
+        </div>
+      );
+    };
+
+    /* ===========================
+       ========== APP ROUTER (FIXED)
+       =========================== */
+    const App = () => {
+      const [appState, setAppState] = useState(() => localStorage.getItem('prop_locker_auth') === 'true' ? 'suite' : 'landing');
+      const [view, setView] = useState('landing');
+      const [tempUserData, setTempUserData] = useState(null);
+
+      const navigateTo = (v) => setView(v);
+
+      if (appState === 'landing' && view === 'about') return <AboutPage onBack={() => setView('landing')} />;
+      if (appState === 'landing' && view === 'how') return <HowItWorksPage onBack={() => setView('landing')} />;
+      if (appState === 'landing' && view === 'faq') return <FAQPage onBack={() => setView('landing')} />;
+      if (appState === 'landing' && view === 'signup') return (
+        <SignupPage
+          onSignupSuccess={(user) => { setTempUserData(user); setView('signupSuccess'); }}
+          onNavigateToLogin={() => { setAppState('login'); setView('landing'); }}  /* FIX: normalize view */
+        />
+      );
+      if (appState === 'landing' && view === 'signupSuccess') return (
+        <SignupSuccessPage
+          createdUser={tempUserData}
+          onGoToLogin={() => { setAppState('login'); setView('landing'); }} /* FIX */
+        />
+      );
+
+      return (
+        <>
+          {appState === 'landing' && view === 'landing' && (
+            <LandingPage onStart={() => setView('signup')} onNavigate={navigateTo} />
+          )}
+
+          {appState === 'login' && (
+            <LoginPage
+              onLogin={(user) => {
+                localStorage.setItem('prop_locker_auth', 'true');
+                localStorage.setItem('prop_locker_current_user', JSON.stringify(user));
+                setAppState('suite');
+                setView('landing'); /* FIX: normalize */
+              }}
+              onNavigateToSignup={() => { setAppState('landing'); setView('signup'); }}
+            />
+          )}
+
+          {appState === 'suite' && (
+            <LockerSuite onLogout={() => {
+              localStorage.removeItem('prop_locker_auth');
+              localStorage.removeItem('prop_locker_current_user');
+              localStorage.removeItem('prop_locker_token');
+              setAppState('landing');
+              setView('landing');
+            }} onSessionExpired={() => {
+              localStorage.removeItem('prop_locker_auth');
+              localStorage.removeItem('prop_locker_current_user');
+              localStorage.removeItem('prop_locker_token');
+              setAppState('login');
+              setView('landing');
+            }} />
+          )}
+        </>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App/>);
+  </script>
+</body>
+</html>
