@@ -345,18 +345,26 @@
     async function requestAuthToken(identity) {
       if (!identity) return null;
       try {
+        console.info("[auth] requesting token for:", identity.loginId || identity.login_id || identity.email);
         const tokenResult = await postJSON("/auth-token", {
           loginId: identity.loginId || identity.login_id || "",
           email: identity.email || ""
         });
+
+        // Handle local mode fallback
+        if (tokenResult?.mode === "local") {
+          console.info("[auth] server returned local mode, no token issued");
+          return null;
+        }
+
         const token = typeof tokenResult?.token === "string" ? tokenResult.token : "";
         if (!token) return null;
 
         localStorage.setItem("prop_locker_token", token);
-        console.debug("[auth-token] tokenParts", token.split(".").length);
+        console.info("[auth] token issued, parts:", token.split(".").length);
         return token;
       } catch (err) {
-        console.warn("Cloud token issuance failed:", err?.message);
+        console.warn("[auth] token issuance failed:", err?.message);
         return null;
       }
     }
@@ -820,27 +828,6 @@
               </div>
 
               <button onClick={onGoToLogin} className="px-10 py-4 bg-white text-black font-bold text-sm tracking-widest rounded-full hover:bg-glow-green transition-all shadow-lg">GO TO LOGIN</button>
-            </div>
-
-            {/* DEV ONLY: Email Preview (Conditional) */}
-            <div className="border border-dashed border-zinc-700 rounded-2xl p-6 opacity-75">
-              <div className="flex items-center gap-2 mb-4 text-zinc-500 text-xs font-bold uppercase tracking-widest">
-                <MailIcon size={14} /> Dev: Backend Email Fallback View
-              </div>
-              <div className="bg-white text-black p-6 rounded-lg font-mono text-sm leading-relaxed shadow-xl">
-                <div className="border-b border-gray-200 pb-2 mb-4">
-                  <span className="text-gray-500">To:</span> {createdUser?.email || "your@email.com"}<br/>
-                  <span className="text-gray-500">Subject:</span> Welcome to Prop Locker - Your Login Details
-                </div>
-                <p>Welcome {createdUser?.name || "Trader"},</p>
-                <p>Your Prop Locker terminal account has been provisioned.</p>
-                <p className="my-4 p-4 bg-gray-100 rounded border border-gray-300">
-                  <strong>Login ID:</strong> {createdUser?.loginId || "PL-XXXXXX"}
-                </p>
-                <p>Access your terminal here: <a href="#" className="text-blue-600 underline">https://proplocker.app/login</a></p>
-                <p className="mt-4 text-xs text-gray-500">Infrastructure for professional traders.</p>
-              </div>
-              <p className="text-center text-[10px] text-zinc-600 mt-2 uppercase font-bold">If ENV VARS are set, this was sent via Resend.</p>
             </div>
           </div>
         </div>
@@ -1659,31 +1646,18 @@
 
       const handleUpgrade = async () => {
         try {
-          if (backendMode !== "cloud") {
-            alert("Upgrades require cloud mode. Please configure Netlify Blobs / sign in to server mode.");
-            return;
-          }
-
           const token = localStorage.getItem("prop_locker_token");
-          const tokenType = typeof token;
-          const tokenLength = token ? token.length : 0;
-          const tokenPartsCount = token ? token.split(".").length : 0;
-          const tokenPreview = token && token.length > 24
-            ? `${token.slice(0, 12)}...${token.slice(-12)}`
-            : token || "";
-          const willSetAuthHeader = Boolean(token);
           const isValidJwt = Boolean(
             token &&
             /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)
           );
 
-          console.debug("[checkout] token type/length", { type: tokenType, length: tokenLength });
-          console.debug("[checkout] token parts", tokenPartsCount);
-          console.debug("[checkout] token masked", tokenPreview);
-          console.debug("[checkout] authorization header set", willSetAuthHeader);
+          console.info("[checkout] backendMode:", backendMode);
+          console.info("[checkout] hasValidJwt:", isValidJwt);
 
-          if (!isValidJwt || tokenPartsCount !== 3) {
-            alert("Upgrades require cloud mode. Please configure Netlify Blobs / sign in to server mode.");
+          if (!isValidJwt) {
+            alert("Please log in again to start checkout.");
+            onSessionExpired();
             return;
           }
 
@@ -1708,7 +1682,7 @@
           }
 
           if (!response.ok) {
-            console.error("Checkout session request failed", {
+            console.error("[checkout] session request failed", {
               status: response.status,
               body: responseText
             });
@@ -1720,6 +1694,7 @@
           if (data?.url) window.location.href = data.url;
           else alert("Checkout session did not return a URL.");
         } catch (e) {
+          console.error("[checkout] error:", e);
           alert("Unable to start checkout right now. Please try again.");
         }
       };
@@ -2033,6 +2008,88 @@
     };
 
     /* ===========================
+       ========== PRICING PAGE
+       =========================== */
+    const PricingPage = ({ onStartTrial, onSkip, loading: externalLoading }) => {
+      const [loading, setLoading] = useState(false);
+      const isLoading = externalLoading || loading;
+
+      const features = [
+        "Real-time portfolio analytics",
+        "Unlimited lockers & accounts",
+        "Cloud sync across devices",
+        "Risk management calculators",
+        "Consistency tracking tools",
+        "Priority support"
+      ];
+
+      const handleStartTrial = async () => {
+        setLoading(true);
+        try {
+          await onStartTrial();
+        } catch {
+          setLoading(false);
+        }
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 animate-enter">
+          <div className="max-w-lg w-full space-y-8">
+            <div className="text-center space-y-3">
+              <LogoMark className="justify-center mb-6" />
+              <h1 className="text-4xl md:text-5xl font-black text-white font-logo uppercase tracking-wider">Professional Access</h1>
+              <p className="text-zinc-400 text-sm max-w-md mx-auto">Unlock the full PropLocker infrastructure. Track, manage, and scale your trading capital with precision.</p>
+            </div>
+
+            <div className="glass-card-strong p-8 rounded-3xl border border-glow-green/30 shadow-[0_0_60px_rgba(109,255,198,0.08)] relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-glow-green text-black text-[9px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-xl">14 Days Free</div>
+
+              <div className="text-center mb-8 pt-4">
+                <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Monthly Plan</div>
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-5xl font-black text-white font-data">$14</span>
+                  <span className="text-2xl font-bold text-zinc-400 font-data">.99</span>
+                  <span className="text-sm text-zinc-500 font-bold">/mo</span>
+                </div>
+                <p className="text-xs text-zinc-500 mt-2">Billed monthly after trial ends</p>
+              </div>
+
+              <div className="space-y-3 mb-8">
+                {features.map((feature, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="w-5 h-5 bg-glow-green/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Check size={12} className="text-glow-green" />
+                    </div>
+                    <span className="text-sm text-zinc-300">{feature}</span>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={handleStartTrial}
+                disabled={isLoading}
+                className="w-full bg-glow-green hover:bg-white text-black font-bold py-4 rounded-xl transition-all uppercase tracking-widest text-sm shadow-[0_0_30px_rgba(109,255,198,0.2)] hover:shadow-[0_0_40px_rgba(109,255,198,0.4)] flex items-center justify-center gap-2"
+              >
+                {isLoading ? <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></span> : "Start Free Trial"}
+              </button>
+
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <LockIcon size={12} className="text-zinc-600" />
+                <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">Secure checkout via Stripe</span>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <button onClick={onSkip} className="text-xs text-zinc-600 hover:text-zinc-400 uppercase tracking-widest font-bold transition-colors">
+                Continue with Free Plan
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    /* ===========================
        ========== APP ROUTER (FIXED)
        =========================== */
     const App = () => {
@@ -2043,16 +2100,96 @@
           /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)
         );
         const persistedMode = localStorage.getItem("prop_locker_backend_mode");
+        const persistedOnboarding = localStorage.getItem("prop_locker_onboarding_stage");
+
+        // Determine initial screen
+        let screen = 'landing';
+        let onboardingStage = persistedOnboarding || 'signup';
+        if (localStorage.getItem('prop_locker_auth') === 'true') {
+          screen = 'suite';
+          if (persistedOnboarding === 'pricing') {
+            onboardingStage = 'pricing';
+          } else {
+            onboardingStage = 'dashboard';
+          }
+        }
+
+        console.info("[mode] backendMode:", persistedMode || (hasJwt ? "cloud" : "local"));
+        console.info("[mode] onboardingStage:", onboardingStage);
 
         return {
-          screen: localStorage.getItem('prop_locker_auth') === 'true' ? 'suite' : 'landing',
-          backendMode: persistedMode || (hasJwt ? "cloud" : "local")
+          screen,
+          backendMode: persistedMode || (hasJwt ? "cloud" : "local"),
+          onboardingStage
         };
       });
       const [view, setView] = useState('landing');
       const [tempUserData, setTempUserData] = useState(null);
 
+      // Handle ?upgrade=success/cancel URL params
+      useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('upgrade') === 'success') {
+          localStorage.setItem('prop_locker_onboarding_stage', 'dashboard');
+          setAppState(s => ({ ...s, onboardingStage: 'dashboard' }));
+          window.history.replaceState({}, '', window.location.pathname);
+        } else if (params.get('upgrade') === 'cancel') {
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      }, []);
+
       const navigateTo = (v) => setView(v);
+
+      const handleCheckout = async () => {
+        const token = localStorage.getItem("prop_locker_token");
+        const isValidJwt = Boolean(
+          token &&
+          /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)
+        );
+
+        console.info("[checkout] initiating from pricing page, hasValidJwt:", isValidJwt);
+
+        if (!isValidJwt) {
+          alert("Please log in to start checkout.");
+          setAppState(s => ({ ...s, screen: 'login', onboardingStage: 'signup' }));
+          setView('landing');
+          return;
+        }
+
+        const response = await fetch(`${NETLIFY_FN_BASE}/create-checkout-session`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({})
+        });
+
+        const responseText = await response.text();
+
+        if (response.status === 401) {
+          localStorage.removeItem("prop_locker_token");
+          alert("Session expired. Please log in again.");
+          setAppState(s => ({ ...s, screen: 'login', onboardingStage: 'signup' }));
+          setView('landing');
+          return;
+        }
+
+        if (!response.ok) {
+          console.error("[checkout] failed:", response.status, responseText);
+          alert("Unable to start checkout right now. Please try again.");
+          return;
+        }
+
+        const data = responseText ? JSON.parse(responseText) : {};
+        if (data?.url) window.location.href = data.url;
+        else alert("Checkout session did not return a URL.");
+      };
+
+      const skipToDashboard = () => {
+        localStorage.setItem('prop_locker_onboarding_stage', 'dashboard');
+        setAppState(s => ({ ...s, onboardingStage: 'dashboard' }));
+      };
 
       if (appState.screen === 'landing' && view === 'about') return <AboutPage onBack={() => setView('landing')} />;
       if (appState.screen === 'landing' && view === 'how') return <HowItWorksPage onBack={() => setView('landing')} />;
@@ -2060,15 +2197,25 @@
       if (appState.screen === 'landing' && view === 'signup') return (
         <SignupPage
           onSignupSuccess={(user) => { setTempUserData(user); setView('signupSuccess'); }}
-          onNavigateToLogin={() => { setAppState((s) => ({ ...s, screen: 'login' })); setView('landing'); }}  /* FIX: normalize view */
+          onNavigateToLogin={() => { setAppState((s) => ({ ...s, screen: 'login' })); setView('landing'); }}
         />
       );
       if (appState.screen === 'landing' && view === 'signupSuccess') return (
         <SignupSuccessPage
           createdUser={tempUserData}
-          onGoToLogin={() => { setAppState((s) => ({ ...s, screen: 'login' })); setView('landing'); }} /* FIX */
+          onGoToLogin={() => { setAppState((s) => ({ ...s, screen: 'login' })); setView('landing'); }}
         />
       );
+
+      // Pricing paywall after signup / login when onboardingStage is 'pricing'
+      if (appState.screen === 'suite' && appState.onboardingStage === 'pricing') {
+        return (
+          <PricingPage
+            onStartTrial={handleCheckout}
+            onSkip={skipToDashboard}
+          />
+        );
+      }
 
       return (
         <>
@@ -2083,27 +2230,35 @@
                 localStorage.setItem('prop_locker_current_user', JSON.stringify(user));
                 const nextMode = backendMode || "local";
                 localStorage.setItem('prop_locker_backend_mode', nextMode);
-                setAppState({ screen: 'suite', backendMode: nextMode });
-                setView('landing'); /* FIX: normalize */
+                console.info("[auth] login success, backendMode:", nextMode);
+
+                // If user has active subscription, go to dashboard; otherwise show pricing
+                const hasSubscription = user?.hasActiveSubscription === true;
+                const stage = hasSubscription ? 'dashboard' : 'pricing';
+                localStorage.setItem('prop_locker_onboarding_stage', stage);
+                setAppState({ screen: 'suite', backendMode: nextMode, onboardingStage: stage });
+                setView('landing');
               }}
               onNavigateToSignup={() => { setAppState((s) => ({ ...s, screen: 'landing' })); setView('signup'); }}
             />
           )}
 
-          {appState.screen === 'suite' && (
+          {appState.screen === 'suite' && appState.onboardingStage === 'dashboard' && (
             <LockerSuite backendMode={appState.backendMode} onLogout={() => {
               localStorage.removeItem('prop_locker_auth');
               localStorage.removeItem('prop_locker_current_user');
               localStorage.removeItem('prop_locker_token');
               localStorage.removeItem('prop_locker_backend_mode');
-              setAppState({ screen: 'landing', backendMode: 'local' });
+              localStorage.removeItem('prop_locker_onboarding_stage');
+              setAppState({ screen: 'landing', backendMode: 'local', onboardingStage: 'signup' });
               setView('landing');
             }} onSessionExpired={() => {
               localStorage.removeItem('prop_locker_auth');
               localStorage.removeItem('prop_locker_current_user');
               localStorage.removeItem('prop_locker_token');
               localStorage.removeItem('prop_locker_backend_mode');
-              setAppState({ screen: 'login', backendMode: 'local' });
+              localStorage.removeItem('prop_locker_onboarding_stage');
+              setAppState({ screen: 'login', backendMode: 'local', onboardingStage: 'signup' });
               setView('landing');
             }} />
           )}
