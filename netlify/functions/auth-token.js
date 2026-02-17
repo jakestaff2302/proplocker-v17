@@ -8,7 +8,10 @@ exports.handler = async (event) => {
 
   try {
     const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) return json(500, { error: "Missing JWT_SECRET" });
+    if (!jwtSecret) {
+      console.warn("[auth] JWT_SECRET not configured, returning local mode");
+      return json(200, { mode: "local", token: null });
+    }
 
     const body = parseBody(event);
     const email = normalizeEmail(body.email);
@@ -20,8 +23,22 @@ exports.handler = async (event) => {
     }
 
     let user = null;
-    if (email) user = await getUserByEmail(email);
-    if (!user && loginId) user = await getUserByLoginId(loginId);
+    try {
+      if (email) user = await getUserByEmail(email);
+      if (!user && loginId) user = await getUserByLoginId(loginId);
+    } catch (dbError) {
+      const message = String(dbError?.message || "");
+      const isBlobsConfigError =
+        message.includes("Netlify Blobs is not configured") ||
+        message.includes("NETLIFY_SITE_ID") ||
+        message.includes("NETLIFY_AUTH_TOKEN");
+
+      if (isBlobsConfigError) {
+        console.warn("[auth] Blobs not configured, returning local mode");
+        return json(200, { mode: "local", token: null });
+      }
+      throw dbError;
+    }
 
     if (!user) {
       return json(401, { error: "Invalid identity" });
@@ -41,8 +58,10 @@ exports.handler = async (event) => {
       { expiresIn: "30d" }
     );
 
+    console.info("[auth] token issued for user", user.id);
     return json(200, { token });
   } catch (error) {
-    return json(500, { error: error.message || "Server error" });
+    console.error("[auth] unexpected error:", error.message);
+    return json(200, { mode: "local", token: null });
   }
 };
