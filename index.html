@@ -2090,6 +2090,238 @@
     };
 
     /* ===========================
+       ========== PLAN SELECT PAGE (Payment-First Entry)
+       =========================== */
+    const PlanSelectPage = ({ onSelectPaid, onSelectFreeTrial, onBack }) => {
+      const [email, setEmail] = useState("");
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState("");
+
+      const features = [
+        "Real-time portfolio analytics",
+        "Unlimited lockers & accounts",
+        "Cloud sync across devices",
+        "Risk management calculators",
+        "Consistency tracking tools",
+        "Priority support"
+      ];
+
+      const handlePaidCheckout = async () => {
+        setError("");
+        if (!email || !/\S+@\S+\.\S+/.test(email)) {
+          setError("Please enter a valid email address");
+          return;
+        }
+        setLoading(true);
+        try {
+          await onSelectPaid(email);
+        } catch (e) {
+          setError(e?.message || "Unable to start checkout. Please try again.");
+          setLoading(false);
+        }
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 animate-enter">
+          <div className="max-w-lg w-full space-y-8">
+            <div className="text-center space-y-3">
+              <LogoMark className="justify-center mb-6" />
+              <h1 className="text-4xl md:text-5xl font-black text-white font-logo uppercase tracking-wider">Choose Your Plan</h1>
+              <p className="text-zinc-400 text-sm max-w-md mx-auto">Select how you'd like to get started with PropLocker.</p>
+            </div>
+
+            {error && <div className="bg-red-500/10 border border-red-500/50 text-red-400 text-xs p-3 rounded text-center font-bold">{error}</div>}
+
+            <div className="glass-card-strong p-8 rounded-3xl border border-glow-green/30 shadow-[0_0_60px_rgba(109,255,198,0.08)] relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-glow-green text-black text-[9px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-xl">Recommended</div>
+
+              <div className="text-center mb-6 pt-4">
+                <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Pro Monthly Plan</div>
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-5xl font-black text-white font-data">$14</span>
+                  <span className="text-2xl font-bold text-zinc-400 font-data">.99</span>
+                  <span className="text-sm text-zinc-500 font-bold">/mo</span>
+                </div>
+                <p className="text-xs text-zinc-500 mt-2">Full access. Cancel anytime.</p>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                {features.map((feature, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="w-5 h-5 bg-glow-green/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Check size={12} className="text-glow-green" />
+                    </div>
+                    <span className="text-sm text-zinc-300">{feature}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Email Address</label>
+                  <input type="email" className="w-full bg-black/40 border-b border-zinc-800 px-4 py-2 text-white text-sm focus:border-glow-green outline-none transition-colors mt-1" value={email} onChange={e => setEmail(e.target.value)} placeholder="trader@firm.com" />
+                </div>
+
+                <button
+                  onClick={handlePaidCheckout}
+                  disabled={loading}
+                  className="w-full bg-glow-green hover:bg-white text-black font-bold py-4 rounded-xl transition-all uppercase tracking-widest text-sm shadow-[0_0_30px_rgba(109,255,198,0.2)] hover:shadow-[0_0_40px_rgba(109,255,198,0.4)] flex items-center justify-center gap-2"
+                >
+                  {loading ? <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></span> : "Subscribe & Continue"}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <LockIcon size={12} className="text-zinc-600" />
+                <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">Secure checkout via Stripe</span>
+              </div>
+            </div>
+
+            <div className="text-center space-y-3">
+              <div className="flex items-center gap-4 justify-center">
+                <div className="h-px w-16 bg-zinc-800"></div>
+                <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">Or</span>
+                <div className="h-px w-16 bg-zinc-800"></div>
+              </div>
+
+              <button onClick={onSelectFreeTrial} className="text-sm text-zinc-400 hover:text-white uppercase tracking-widest font-bold transition-colors border border-zinc-800 px-8 py-3 rounded-xl hover:border-zinc-600">
+                Start 14-Day Free Trial
+              </button>
+              <p className="text-[10px] text-zinc-600">Requires account creation first, then card capture via Stripe.</p>
+            </div>
+
+            <div className="text-center">
+              <button onClick={onBack} className="text-xs text-zinc-600 hover:text-zinc-400 uppercase tracking-widest font-bold transition-colors">
+                Back to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    /* ===========================
+       ========== CREATE ACCOUNT AFTER PAYMENT PAGE
+       =========================== */
+    const CreateAccountAfterPaymentPage = ({ pendingToken, pendingEmail, onAccountCreated, onCancel }) => {
+      const [formData, setFormData] = useState({ name: "", email: pendingEmail || "", password: "", confirm: "", agree: false });
+      const [autoGen, setAutoGen] = useState(false);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState("");
+
+      const generatePassword = () => {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+        let pass = "";
+        for(let i=0; i<16; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        setFormData(prev => ({...prev, password: pass, confirm: pass}));
+      };
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+
+        if (!formData.name || !formData.email || !formData.password) return setError("All fields required");
+        if (!formData.agree) return setError("You must agree to the terms");
+        if (!autoGen && formData.password !== formData.confirm) return setError("Passwords do not match");
+        if (formData.password.length < 10) return setError("Password must be at least 10 characters");
+        if (!/\S+@\S+\.\S+/.test(formData.email)) return setError("Invalid email format");
+
+        setLoading(true);
+
+        try {
+          const passwordHash = await hashString(formData.password);
+          const loginId = generateLoginId();
+
+          const result = await postJSON("/complete-signup", {
+            name: formData.name,
+            email: formData.email,
+            passwordHash: passwordHash,
+            loginId: loginId,
+            pendingToken: pendingToken
+          });
+
+          if (result.token) {
+            localStorage.setItem("prop_locker_token", result.token);
+          }
+
+          const user = {
+            name: result.user?.name || formData.name,
+            email: result.user?.email || formData.email,
+            loginId: result.user?.login_id || result.user?.loginId || loginId,
+            hasActiveSubscription: result.user?.hasActiveSubscription || false,
+          };
+
+          await sendLoginEmail({
+            email: user.email,
+            loginId: user.loginId,
+            name: user.name
+          });
+
+          setLoading(false);
+          onAccountCreated(user, result.token ? "cloud" : "local");
+        } catch (err) {
+          setError(err?.message || "Error creating account. Please try again.");
+          setLoading(false);
+        }
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 animate-enter">
+          <div className="glass-card-strong p-8 rounded-3xl w-full max-w-md border border-glow-green/20 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-glow-green/20 rounded-full flex items-center justify-center mx-auto mb-4 text-glow-green border border-glow-green"><Check size={24} /></div>
+              <h2 className="text-white text-2xl font-bold font-logo tracking-widest uppercase">Payment Confirmed</h2>
+              <p className="text-zinc-400 text-xs mt-2">Now set up your account to get started.</p>
+            </div>
+
+            {error && <div className="bg-red-500/10 border border-red-500/50 text-red-400 text-xs p-3 rounded mb-4 text-center font-bold">{error}</div>}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Full Name</label>
+                <input type="text" className="w-full bg-black/40 border-b border-zinc-800 px-4 py-2 text-white text-sm focus:border-glow-green outline-none transition-colors" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})} placeholder="John Trader" />
+              </div>
+              <div>
+                <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Email Address</label>
+                <input type="email" className={`w-full bg-black/40 border-b border-zinc-800 px-4 py-2 text-white text-sm focus:border-glow-green outline-none transition-colors ${pendingEmail ? 'opacity-60' : ''}`} value={formData.email} onChange={e=>setFormData({...formData, email: e.target.value})} placeholder="trader@firm.com" readOnly={!!pendingEmail} />
+                {pendingEmail && <p className="text-[9px] text-zinc-600 mt-1">Email must match the one used during checkout.</p>}
+              </div>
+
+              <div className="pt-2">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Password</label>
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setAutoGen(!autoGen); if(!autoGen) generatePassword(); else setFormData({...formData, password:"", confirm:""}); }}>
+                    <div className={`w-3 h-3 rounded-full border border-zinc-600 ${autoGen ? 'bg-glow-green' : ''}`}></div>
+                    <span className="text-[10px] text-zinc-400 font-bold uppercase">Auto-Generate</span>
+                  </div>
+                </div>
+                <input type={autoGen ? "text" : "password"} className="w-full bg-black/40 border-b border-zinc-800 px-4 py-2 text-white text-sm focus:border-glow-green outline-none font-mono" value={formData.password} onChange={e=>setFormData({...formData, password: e.target.value})} placeholder="Minimum 10 chars" readOnly={autoGen} />
+              </div>
+
+              {!autoGen && (
+                <div>
+                  <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Confirm Password</label>
+                  <input type="password" className="w-full bg-black/40 border-b border-zinc-800 px-4 py-2 text-white text-sm focus:border-glow-green outline-none transition-colors" value={formData.confirm} onChange={e=>setFormData({...formData, confirm: e.target.value})} />
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 pt-2">
+                <div className={`w-5 h-5 border border-zinc-600 rounded flex items-center justify-center cursor-pointer ${formData.agree ? 'bg-glow-green border-glow-green' : 'bg-black/40'}`} onClick={()=>setFormData({...formData, agree: !formData.agree})}>
+                  {formData.agree && <Check size={14} className="text-black" />}
+                </div>
+                <span className="text-xs text-zinc-400">I agree to the <span className="text-white underline cursor-pointer">Terms of Service</span> & Privacy Policy.</span>
+              </div>
+
+              <button type="submit" disabled={loading} className="w-full bg-glow-green hover:bg-white text-black font-bold py-4 rounded-xl transition-all mt-4 flex items-center justify-center gap-2 uppercase tracking-widest shadow-[0_0_20px_rgba(109,255,198,0.2)]">
+                {loading ? <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></span> : "COMPLETE SETUP"}
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    };
+
+    /* ===========================
        ========== APP ROUTER (FIXED)
        =========================== */
     const App = () => {
@@ -2125,10 +2357,34 @@
       });
       const [view, setView] = useState('landing');
       const [tempUserData, setTempUserData] = useState(null);
+      const [pendingToken, setPendingToken] = useState(null);
+      const [pendingEmail, setPendingEmail] = useState(null);
 
-      // Handle ?upgrade=success/cancel URL params
+      // Handle URL params for payment-first flow and legacy upgrade flow
       useEffect(() => {
         const params = new URLSearchParams(window.location.search);
+
+        // Payment-first flow: returning from Stripe Checkout
+        if (params.get('flow') === 'payment_first') {
+          const status = params.get('status');
+          const token = params.get('pending_token');
+          const emailParam = params.get('email');
+
+          if (status === 'success' && token) {
+            // Store pending token and show account creation page
+            setPendingToken(token);
+            setPendingEmail(emailParam || localStorage.getItem('prop_locker_pending_email') || "");
+            setAppState(s => ({ ...s, screen: 'landing' }));
+            setView('createAccountAfterPayment');
+          } else if (status === 'cancel') {
+            // User cancelled payment, go back to plan selection
+            setView('planSelect');
+          }
+          window.history.replaceState({}, '', window.location.pathname);
+          return;
+        }
+
+        // Legacy: Handle ?upgrade=success/cancel URL params
         if (params.get('upgrade') === 'success') {
           localStorage.setItem('prop_locker_onboarding_stage', 'dashboard');
           setAppState(s => ({ ...s, onboardingStage: 'dashboard' }));
@@ -2140,14 +2396,54 @@
 
       const navigateTo = (v) => setView(v);
 
-      const handleCheckout = async () => {
+      // Payment-first: redirect to Stripe Checkout without an account
+      const handlePaidCheckout = async (email) => {
+        // Store email for recovery if user returns
+        localStorage.setItem('prop_locker_pending_email', email);
+
+        const response = await fetch(`${NETLIFY_FN_BASE}/create-pending-checkout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+
+        const responseText = await response.text();
+
+        if (!response.ok) {
+          let errorMsg = "Unable to start checkout. Please try again.";
+          try {
+            const data = JSON.parse(responseText);
+            errorMsg = data.error || errorMsg;
+          } catch {}
+          throw new Error(errorMsg);
+        }
+
+        const data = responseText ? JSON.parse(responseText) : {};
+        if (data?.url) {
+          // Store the pending token locally in case we need it
+          if (data.pendingToken) {
+            localStorage.setItem('prop_locker_pending_token', data.pendingToken);
+          }
+          window.location.href = data.url;
+        } else {
+          throw new Error("Checkout session did not return a URL.");
+        }
+      };
+
+      // Free trial: signup first, then Stripe for card capture
+      const handleFreeTrialStart = () => {
+        setView('signupFreeTrial');
+      };
+
+      // After free trial signup completes, redirect to Stripe for card capture
+      const handleFreeTrialCheckout = async () => {
         const token = localStorage.getItem("prop_locker_token");
         const isValidJwt = Boolean(
           token &&
           /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)
         );
 
-        console.info("[checkout] initiating from pricing page, hasValidJwt:", isValidJwt);
+        console.info("[checkout] initiating free trial checkout, hasValidJwt:", isValidJwt);
 
         if (!isValidJwt) {
           alert("Please log in to start checkout.");
@@ -2186,14 +2482,72 @@
         else alert("Checkout session did not return a URL.");
       };
 
+      // Legacy handleCheckout for pricing page (from existing logged-in users)
+      const handleCheckout = handleFreeTrialCheckout;
+
       const skipToDashboard = () => {
         localStorage.setItem('prop_locker_onboarding_stage', 'dashboard');
         setAppState(s => ({ ...s, onboardingStage: 'dashboard' }));
       };
 
+      // Info pages
       if (appState.screen === 'landing' && view === 'about') return <AboutPage onBack={() => setView('landing')} />;
       if (appState.screen === 'landing' && view === 'how') return <HowItWorksPage onBack={() => setView('landing')} />;
       if (appState.screen === 'landing' && view === 'faq') return <FAQPage onBack={() => setView('landing')} />;
+
+      // Payment-first flow: Plan selection page
+      if (appState.screen === 'landing' && view === 'planSelect') {
+        return (
+          <PlanSelectPage
+            onSelectPaid={handlePaidCheckout}
+            onSelectFreeTrial={handleFreeTrialStart}
+            onBack={() => setView('landing')}
+          />
+        );
+      }
+
+      // Payment-first flow: Create account after successful payment
+      if (appState.screen === 'landing' && view === 'createAccountAfterPayment') {
+        return (
+          <CreateAccountAfterPaymentPage
+            pendingToken={pendingToken || localStorage.getItem('prop_locker_pending_token') || ""}
+            pendingEmail={pendingEmail || localStorage.getItem('prop_locker_pending_email') || ""}
+            onAccountCreated={(user, backendMode) => {
+              localStorage.setItem('prop_locker_auth', 'true');
+              localStorage.setItem('prop_locker_current_user', JSON.stringify(user));
+              localStorage.setItem('prop_locker_backend_mode', backendMode || 'cloud');
+              localStorage.setItem('prop_locker_onboarding_stage', 'dashboard');
+              // Clean up pending state
+              localStorage.removeItem('prop_locker_pending_token');
+              localStorage.removeItem('prop_locker_pending_email');
+              setTempUserData(user);
+              setView('signupSuccess');
+            }}
+            onCancel={() => setView('planSelect')}
+          />
+        );
+      }
+
+      // Free trial flow: signup form (account creation first)
+      if (appState.screen === 'landing' && view === 'signupFreeTrial') {
+        return (
+          <SignupPage
+            onSignupSuccess={(user) => {
+              setTempUserData(user);
+              // After account creation, set auth state then redirect to Stripe for card capture
+              localStorage.setItem('prop_locker_auth', 'true');
+              localStorage.setItem('prop_locker_current_user', JSON.stringify(user));
+              localStorage.setItem('prop_locker_backend_mode', 'cloud');
+              localStorage.setItem('prop_locker_onboarding_stage', 'pricing');
+              setAppState({ screen: 'suite', backendMode: 'cloud', onboardingStage: 'pricing' });
+              setView('landing');
+            }}
+            onNavigateToLogin={() => { setAppState((s) => ({ ...s, screen: 'login' })); setView('landing'); }}
+          />
+        );
+      }
+
+      // Original signup flow (for direct "signup" links)
       if (appState.screen === 'landing' && view === 'signup') return (
         <SignupPage
           onSignupSuccess={(user) => { setTempUserData(user); setView('signupSuccess'); }}
@@ -2203,7 +2557,16 @@
       if (appState.screen === 'landing' && view === 'signupSuccess') return (
         <SignupSuccessPage
           createdUser={tempUserData}
-          onGoToLogin={() => { setAppState((s) => ({ ...s, screen: 'login' })); setView('landing'); }}
+          onGoToLogin={() => {
+            // If user completed payment-first flow, go straight to dashboard
+            if (localStorage.getItem('prop_locker_auth') === 'true') {
+              setAppState({ screen: 'suite', backendMode: localStorage.getItem('prop_locker_backend_mode') || 'cloud', onboardingStage: 'dashboard' });
+              setView('landing');
+            } else {
+              setAppState((s) => ({ ...s, screen: 'login' }));
+              setView('landing');
+            }
+          }}
         />
       );
 
@@ -2220,7 +2583,7 @@
       return (
         <>
           {appState.screen === 'landing' && view === 'landing' && (
-            <LandingPage onStart={() => setView('signup')} onNavigate={navigateTo} />
+            <LandingPage onStart={() => setView('planSelect')} onNavigate={navigateTo} />
           )}
 
           {appState.screen === 'login' && (
@@ -2239,7 +2602,7 @@
                 setAppState({ screen: 'suite', backendMode: nextMode, onboardingStage: stage });
                 setView('landing');
               }}
-              onNavigateToSignup={() => { setAppState((s) => ({ ...s, screen: 'landing' })); setView('signup'); }}
+              onNavigateToSignup={() => { setAppState((s) => ({ ...s, screen: 'landing' })); setView('planSelect'); }}
             />
           )}
 
@@ -2250,6 +2613,8 @@
               localStorage.removeItem('prop_locker_token');
               localStorage.removeItem('prop_locker_backend_mode');
               localStorage.removeItem('prop_locker_onboarding_stage');
+              localStorage.removeItem('prop_locker_pending_token');
+              localStorage.removeItem('prop_locker_pending_email');
               setAppState({ screen: 'landing', backendMode: 'local', onboardingStage: 'signup' });
               setView('landing');
             }} onSessionExpired={() => {

@@ -1,4 +1,5 @@
 const Stripe = require("stripe");
+const { getStore } = require("@netlify/blobs");
 const {
   getUserById,
   getUserIdByStripeCustomerId,
@@ -88,20 +89,62 @@ exports.handler = async (event) => {
     const object = stripeEvent.data.object;
 
     if (type === "checkout.session.completed") {
-      const user = await resolveUserFromObject(object);
-      if (user) {
-        const subscriptionId =
-          typeof object.subscription === "string" ? object.subscription : object.subscription && object.subscription.id;
+      const isPaymentFirst = object.metadata && object.metadata.signup_flow === "payment_first";
+      const pendingToken = object.metadata && object.metadata.pending_token;
 
-        if (subscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-          await applySubscriptionToUser(user, subscription);
-        } else {
-          await setUser({
-            ...user,
-            stripeCustomerId: object.customer ? String(object.customer) : user.stripeCustomerId,
-            hasActiveSubscription: true
-          });
+      if (isPaymentFirst && pendingToken) {
+        // Payment-first flow: user account doesn't exist yet.
+        // Update the pending record with subscription details so complete-signup can use them.
+        const siteID = process.env.NETLIFY_SITE_ID;
+        const blobsToken = process.env.NETLIFY_AUTH_TOKEN;
+        if (siteID && blobsToken) {
+          try {
+            const pendingStore = getStore("proplocker_pending_signups", { siteID, token: blobsToken });
+            const raw = await pendingStore.get(`pending:${pendingToken}`, { type: "text" });
+            if (raw) {
+              const pendingData = JSON.parse(raw);
+              const subscriptionId =
+                typeof object.subscription === "string" ? object.subscription : object.subscription && object.subscription.id;
+              const customerId = object.customer ? String(object.customer) : pendingData.stripeCustomerId;
+
+              let subscriptionStatus = null;
+              if (subscriptionId) {
+                const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+                subscriptionStatus = subscription.status;
+              }
+
+              await pendingStore.set(`pending:${pendingToken}`, JSON.stringify({
+                ...pendingData,
+                status: "payment_confirmed",
+                stripeCustomerId: customerId,
+                stripeSubscriptionId: subscriptionId || null,
+                stripeSubscriptionStatus: subscriptionStatus,
+                hasActiveSubscription: subscriptionStatus ? isActiveStripeStatus(subscriptionStatus) : true,
+                paymentConfirmedAt: new Date().toISOString()
+              }));
+              console.info("[webhook] payment-first checkout confirmed for pending_token:", pendingToken);
+            }
+          } catch (e) {
+            console.error("[webhook] Failed to update pending record:", e.message);
+          }
+        }
+      } else {
+        // Standard flow: user already exists
+        const user = await resolveUserFromObject(object);
+        if (user) {
+          const subscriptionId =
+            typeof object.subscription === "string" ? object.subscription : object.subscription && object.subscription.id;
+
+          if (subscriptionId) {
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+            await applySubscriptionToUser(user, subscription);
+          } else {
+            await setUser({
+              ...user,
+              stripeCustomerId: object.customer ? String(object.customer) : user.stripeCustomerId,
+              hasActiveSubscription: true
+            });
+          }
         }
       }
     }
